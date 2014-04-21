@@ -1,0 +1,22 @@
+Name:                crawler
+Version:             1.0
+Synopsis:            Extracting information from various site
+Description:         Extracting information from various site
+
+cabal-version:       >= 1.2
+License:             GPL
+Author:              Romain Gerard
+Maintainer:          Romain Gerard <romain.gerard@erebe.eu>
+build-type:          Simple
+
+Library
+    ghc-options:     -O3 -Wall
+
+Executable          crawler
+    ghc-options:         -threaded -Wall -O3
+    Main-is:             src/main.hs
+    Build-Depends:       base, bytestring, conduit, async,
+                         http-conduit, http-types, failure,
+                         transformers, lifted-base, deepseq
+
+
