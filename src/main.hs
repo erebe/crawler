@@ -1,8 +1,10 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-import           Control.Concurrent.Async
+
+import           Control.Concurrent.Async(async,wait)
 import qualified Data.Conduit as C
 import           Network.HTTP.Conduit
 import           Network.HTTP.Types.Status
@@ -16,9 +18,19 @@ import           Control.Monad
 import           Data.Maybe
 
 import           System.Environment         (getArgs)
-import Control.Monad.Trans.Maybe(MaybeT, runMaybeT)
+import           Control.Monad.Trans.Maybe(MaybeT, runMaybeT)
+import           Control.Lens
 
 
+data Episode = Episode { _name      :: String
+                        ,_magnetURI :: String
+                        ,_date      :: String
+                        ,_link      :: String
+                        ,_fileName  :: String
+
+                        } deriving (Show,Read)
+
+$(makeLenses ''Episode)
 
 getPage :: (C.MonadBaseControl IO m, MonadIO m) => (BL.ByteString -> IO b) -> [String] -> m [Maybe b]
 getPage func urls = withManager $ \m -> mapM (runWorker m) urls
@@ -46,20 +58,21 @@ worker manager url = msum $ replicate 3 fetchPage
             return $ responseBody response
 
 
-extractData :: BL.ByteString -> [(Maybe String,Maybe String,Maybe String,Maybe String,Maybe String)]
-extractData xmlStr = (\el -> ( findElemByName "title" el
-                              ,findElemByName "link" el
-                              ,findElemByName "pubDate" el
-                              ,findElem "magnetURI" "http://xmlns.ezrss.it/0.1/" el
-                              ,findElem "fileName" "http://xmlns.ezrss.it/0.1/" el
+extractData :: BL.ByteString -> [Episode]
+extractData xmlStr = (\el ->  name      .~ extractString (findElemByName "title" el)
+                            $ link      .~ extractString (findElemByName "link" el)
+                            $ date      .~ extractString (findElemByName "pubDate" el)
+                            $ magnetURI .~ extractString (findElem "magnetURI" "http://xmlns.ezrss.it/0.1/" el)
+                            $ fileName  .~ extractString (findElem "fileName" "http://xmlns.ezrss.it/0.1/" el)
+                            $ Episode "" "" "" "" ""
 
-                             )) <$> concat (findItems <$> parseXml xmlStr)
+                      ) <$> concat (findItems <$> parseXml xmlStr)
         where
-            parseXml               = XML.onlyElems . XML.parseXML
-            findElemByName name el = XML.strContent <$> XML.findElement (XML.QName name Nothing Nothing) el
-            findElem name uri el   = XML.strContent <$> XML.findElement (XML.QName name (Just uri) Nothing) el
-            findItems              = XML.findElements (XML.QName "item" Nothing Nothing)
-
+            parseXml                   = XML.onlyElems . XML.parseXML
+            findElemByName tagName     = XML.findElement (XML.QName tagName Nothing Nothing)
+            findElem tagName tagUri    = XML.findElement (XML.QName tagName (Just tagUri) Nothing)
+            findItems                  = XML.findElements (XML.QName "item" Nothing Nothing)
+            extractString el           = fromMaybe "" $ XML.strContent <$> el
 
 craftEzrssUrl :: String -> String
 craftEzrssUrl serieName = protocol ++ baseUrl ++ buildArgs
@@ -83,7 +96,7 @@ main :: IO ()
 main = do
     args <- getArgs
     m <- getPage (async . test) (craftEzrssUrl <$> args)
-    _ <- mapM_ (wait . fromJust) m
+    _ <- mapM_ wait  (catMaybes m)
     return ()
 
 

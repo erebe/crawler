@@ -17,6 +17,6 @@ Executable          crawler
     Main-is:             src/main.hs
     Build-Depends:       base, bytestring, conduit, async,
                          http-conduit, http-types, failure,
-                         transformers, lifted-base, xml
+                         transformers, lifted-base, xml, lens
 
 
