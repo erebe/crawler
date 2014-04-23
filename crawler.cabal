@@ -13,9 +13,10 @@ Library
     ghc-options:     -O3 -Wall -threaded
 
 Executable          crawler
+    hs-source-dirs:       src
     ghc-options:         -threaded -Wall -O3
-    Main-is:             src/main.hs
-    Build-Depends:       base, bytestring, conduit, async,
+    Main-is:             main.hs
+    Build-Depends:       base, bytestring, monad-control, async,
                          http-conduit, http-types, failure,
                          transformers, lifted-base, xml, lens
 
