@@ -32,8 +32,8 @@ data Episode = Episode { _name      :: String
 
 $(makeLenses ''Episode)
 
-getPage :: (MonadBaseControl IO m, MonadIO m) => (BL.ByteString -> IO b) -> [String] -> m [Maybe b]
-getPage func urls = withManager $ \m -> mapM (runWorker m) urls
+getPages :: (MonadBaseControl IO m, MonadIO m) => (BL.ByteString -> m b) -> [String] -> m [Maybe b]
+getPages func urls = withManager $ \m -> mapM (runWorker m) urls
     where
         runWorker m url = do pageBody <- runMaybeT $ worker m url
                              case func <$> pageBody of
@@ -89,7 +89,7 @@ craftEzrssUrl serieName = protocol ++ baseUrl ++ buildArgs
 
 fetchEzrtvSeries :: [String] -> IO [[Episode]]
 fetchEzrtvSeries seriesNames = do
-    m <- getPage (async . return . extractData) (craftEzrssUrl <$> seriesNames)
+    m <- getPages (async . return . extractData) (craftEzrssUrl <$> seriesNames)
     mapM wait  (catMaybes m)
 
 

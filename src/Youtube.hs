@@ -1,5 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
+module Youtube where
+
 import           Text.Regex.PCRE
 
 import           Control.Concurrent.Async
@@ -16,7 +18,7 @@ import           Data.Maybe
 import           System.Environment         (getArgs)
 
 rpattern ::  BL.ByteString
-rpattern =  BLC.pack "data-context-item-(id|title)=\\\"[^\"]+"
+rpattern =  BLC.pack "data-video-ids=\\\"[^\"]+"
 
 rInpattern ::  BL.ByteString
 rInpattern = BLC.pack "\"(.*)" 
