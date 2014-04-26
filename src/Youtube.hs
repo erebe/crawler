@@ -63,8 +63,8 @@ extractVideos htmlPage =
                                 <$> XML.filterElement (\el -> fromMaybe "" (XML.findAttr (XML.QName "id" Nothing Nothing) el) == "video-page-content") ll
 
 
-fetchYoutubeChannels :: [String] -> IO [Channel]
-fetchYoutubeChannels channelsName = do
+fetchChannels :: [String] -> IO [Channel]
+fetchChannels channelsName = do
         youtubeVideos <- getPages (return . extractVideos) (getChannelURL <$> channelsName)
         let vids = (\(chName, xs) -> Channel "" []
                                      & name   .~ chName

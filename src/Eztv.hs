@@ -4,7 +4,6 @@
 module Eztv where
 
 import           Http(getPages)
-import           Control.Concurrent.Async(async,wait)
 
 import qualified Data.ByteString.Lazy as BL
 
@@ -24,7 +23,13 @@ data Episode = Episode { _name      :: String
 
                         } deriving (Show,Read)
 
+data Serie = Serie { _serieName :: String
+                    ,_episodes  :: [Episode]
+
+                   } deriving (Show, Read)
+
 $(makeLenses ''Episode)
+$(makeLenses ''Serie)
 
 
 
@@ -45,21 +50,27 @@ extractData xmlStr = (\el ->  name      .~ extractString (findElemByName "title"
             extractString el           = fromMaybe "" $ XML.strContent <$> el
 
 craftEzrssUrl :: String -> String
-craftEzrssUrl serieName = protocol ++ baseUrl ++ buildArgs
+craftEzrssUrl nameS = protocol ++ baseUrl ++ buildArgs
     where
         protocol  = "http://"
         baseUrl   = "ezrss.it/search/index.php"
         args      = [ ("simple", "")
                      ,("mode", "rss")
-                     ,("show_name", serieName)
+                     ,("show_name", nameS)
                     ]
         buildArgs = '?' : ( drop 1 . join $
                             (\(x, y) -> "&" ++ x ++ "=" ++ y ) <$> args
                           )
 
-fetchEztvSeries :: [String] -> IO [[Episode]]
-fetchEztvSeries seriesNames = do
-    m <- getPages (async . return . extractData) (craftEzrssUrl <$> seriesNames)
-    mapM wait  (catMaybes m)
+fetchSeries :: [String] -> IO [Serie]
+fetchSeries seriesNames = do
+    episodes' <- getPages (return . extractData) (craftEzrssUrl <$> seriesNames)
+    let series = (\(nameS, eps) -> serieName .~ nameS
+                                 $ episodes .~ fromMaybe [] eps
+                                 $ Serie "" []
+                 )
+                <$> zip seriesNames episodes'
+
+    return series
 
 
