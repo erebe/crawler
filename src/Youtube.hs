@@ -1,99 +1,76 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleContexts #-}
 
 module Youtube where
 
-import           Text.Regex.PCRE
-
-import           Control.Concurrent.Async
-import           Network.HTTP.Conduit
-import           Network.HTTP.Types.Status
+import           Http(getPages)
 
 import qualified Data.ByteString.Lazy       as BL
-import qualified Data.ByteString.Lazy.Char8 as BLC
 
 import           Control.Applicative
-import qualified Control.Exception          as Ex
-import           Control.Monad
 import           Data.Maybe
-import           System.Environment         (getArgs)
 
-rpattern ::  BL.ByteString
-rpattern =  BLC.pack "data-video-ids=\\\"[^\"]+"
-
-rInpattern ::  BL.ByteString
-rInpattern = BLC.pack "\"(.*)" 
+import           Control.Lens
+import           Control.Arrow((&&&), (>>>))
+import qualified Text.XML.Light as XML
 
 
-data Video = Video { titre       :: String
-                     , url       :: String
-                     , thumbnail :: String
+data Video = Video { _titre     :: String
+                    ,_url       :: String
+                    ,_thumbnail :: String
+
                    } deriving (Show, Read)
 
-data Channel = Channel
-             { name   :: String
-             , videos :: [Video]
-             } deriving (Show, Read)
+data Channel = Channel { _name   :: String
+                        ,_videos :: [Video]
 
-getVideosChannel :: String -> String
-getVideosChannel str = "http://www.youtube.com/user/" ++ str ++ "/videos"
+                       } deriving (Show, Read)
+
+$(makeLenses ''Video)
+$(makeLenses ''Channel)
+
+
+getChannelURL :: String -> String
+getChannelURL str = "http://www.youtube.com/user/" ++ str ++ "/videos"
 
 
 
 toVideo :: String -> String -> Video
-toVideo a b =
-            if length a <= 15 then
-                Video { titre = b,
-                        url = "http://www.youtube.com/watch?v=" ++ a,
-                        thumbnail = "http://i1.ytimg.com/vi/" ++ a ++ "/mqdefault.jpg"
-                      }
-            else
-                Video { titre = a,
-                        url = "http://www.youtube.com/watch?v=" ++ b,
-                        thumbnail = "http://i1.ytimg.com/vi/" ++ b ++ "/mqdefault.jpg"
-                      }
+toVideo a b = Video "" "" ""
+              & titre     .~ b
+              & url       .~ "http://www.youtube.com/watch?v=" ++ a
+              & thumbnail .~ "http://i1.ytimg.com/vi/" ++ a ++ "/mqdefault.jpg"
 
-
--- Download the file passed by url
-downloadPage :: String -> IO(Maybe BL.ByteString)
-downloadPage url = do
-    req <- parseUrl url
-
-    -- Hang until the server reply
-    let request = req {responseTimeout = Nothing}
-    response <- withManager $ httpLbs request
-    guard (responseStatus response == ok200)
-
-    return . Just $ responseBody response
 
 
 extractVideos :: BL.ByteString -> [Video]
-extractVideos page =
-    toTuple $ matches page
+extractVideos htmlPage =
+       concat $ ((\t -> extractUUID <$> filterUUIDEls t) &&& (\el -> extractTitle <$> filterTitleEls el)
+                    >>> (\(uids,titles) -> ((\(uid, title) -> toVideo (fromMaybe "" uid)  (fromMaybe "" title)) <$> zip uids titles))
+                ) <$> parseXml htmlPage
 
     where
-    matches p = getAllTextMatches $ p =~ rpattern :: [BL.ByteString]
+        parseXml        = XML.onlyElems . XML.parseXML
+        uidStr          = "data-video-ids"
+        extractUUID     = XML.findAttr (XML.QName uidStr Nothing Nothing)
+        extractTitle    = XML.findAttr (XML.QName "title" Nothing Nothing)
+        filterUUIDEls   = XML.filterElements (isJust . XML.findAttr (XML.QName uidStr Nothing Nothing))
+        -- LOL
+        filterTitleEls ll = fromMaybe []
+                                 $ XML.filterElements (\el -> (XML.qName (XML.elName el) == "a")
+                                                           && isJust (XML.findAttr (XML.QName "data-sessionlink" Nothing Nothing) el)
+                                                           && isJust (XML.findAttr (XML.QName "title" Nothing Nothing) el))
+                                <$> XML.filterElement (\el -> fromMaybe "" (XML.findAttr (XML.QName "id" Nothing Nothing) el) == "video-page-content") ll
 
-    getInside txt = last . getAllTextSubmatches $ txt =~ rInpattern :: BL.ByteString
 
-    toTuple (a:b:xs) = toVideo  (BLC.unpack $ getInside a)
-                                (BLC.unpack $ getInside  b) : toTuple xs
-    toTuple _ = []
+fetchYoutubeChannels :: [String] -> IO [Channel]
+fetchYoutubeChannels channelsName = do
+        youtubeVideos <- getPages (return . extractVideos) (getChannelURL <$> channelsName)
+        let vids = (\(chName, xs) -> Channel "" []
+                                     & name   .~ chName
+                                     & videos .~ fromMaybe [] xs
 
+                   ) <$> zip channelsName youtubeVideos
 
-fetchChannel :: String -> IO Channel
-fetchChannel name = do
-    videos <- getVideos name `Ex.catch` invalidChannelName
-    return Channel { name = name, videos = videos }
-
-    where
-    invalidChannelName :: HttpException -> IO [Video]
-    invalidChannelName _ = return []
-
-    getVideos channel = (extractVideos . fromJust) <$> (downloadPage . getVideosChannel $ channel)
-
-main :: IO()
-main = do
-    channelsName <- getArgs
-    fetcherJobs <- mapM (async . fetchChannel) channelsName
-    mapM_ ((=<<) print . wait) fetcherJobs
+        return vids
 

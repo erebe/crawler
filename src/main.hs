@@ -1,14 +1,14 @@
 import System.Environment(getArgs)
-import Eztv(fetchEzrtvSeries)
+import Eztv(fetchEztvSeries)
+import Youtube(fetchYoutubeChannels)
 
 
 main :: IO ()
 main = do
     args <- getArgs
-    ss <- fetchEzrtvSeries args
+    ss <- fetchYoutubeChannels args
     print ss
     return ()
-
 
 
 
