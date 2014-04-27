@@ -19,6 +19,6 @@ Executable          crawler
     Build-Depends:       base, bytestring, monad-control, async,
                          http-conduit, http-types, failure,
                          transformers, lifted-base, xml, lens,
-                         directory
+                         directory, unbounded-delays, time
 
 
