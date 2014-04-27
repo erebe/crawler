@@ -1,4 +1,5 @@
--- import System.Environment(getArgs)
+{-# LANGUAGE OverloadedStrings #-}
+
 import qualified Eztv
 import qualified Youtube
 import System.Directory(getHomeDirectory)
@@ -10,6 +11,9 @@ import Control.Concurrent.MVar(newEmptyMVar, MVar, putMVar, takeMVar)
 import Control.Monad(forever)
 import Control.Concurrent.Thread.Delay(delay)
 
+import Web.Scotty
+import Data.Monoid(mconcat)
+import Control.Monad.IO.Class(liftIO)
 
 
 data Crawlable = Channels [Youtube.Channel]
@@ -35,7 +39,7 @@ spawnFetcher = do
                     config <- loadConfigFile
                     let actions = [ Series   <$> Eztv.fetchSeries (getFromConfig "eztv" config)
                                   , Channels <$> Youtube.fetchChannels (getFromConfig "youtube" config)
-                                  ]  :: [IO Crawlable]
+                                  ] :: [IO Crawlable]
 
                     jobs <- sequence $ async <$> actions
                     res <- mapM wait jobs
@@ -43,10 +47,20 @@ spawnFetcher = do
                     putStrLn "Going to sleep !"
                     delay (10^6 * 60 * 60 * 2)
 
+
+runRestServer queue = scotty 8080 $ do
+    get "/:word/:teo" $ do
+        -- test <- param "word"
+        -- te <- param "teo"
+        dest <- liftIO $ takeMVar queue
+        json $ show dest
+
+
 main :: IO ()
 main = do
     queue <- spawnFetcher
-    forever $ do
-        dest <- takeMVar queue
-        print dest
+    runRestServer queue
+    -- forever $ do
+    --     dest <- takeMVar queue
+    --     print dest
 
