@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 import qualified Eztv
 import qualified Youtube
@@ -15,19 +16,34 @@ import Web.Scotty
 import Control.Monad.IO.Class(liftIO)
 import Data.List(find)
 import Control.Lens
-import qualified Data.ByteString.Lazy.Char8 as BC
+
+import Data.Aeson
+import GHC.Generics
+import Data.Aeson.Encode.Pretty
 
 
 data Crawlable = Crawlable {
                       _channels :: [Youtube.Channel]
                      ,_series   :: [Eztv.Serie]
-                 } deriving (Show, Read)
+                 } deriving (Show, Read, Generic)
 
 $(makeLenses ''Crawlable)
+instance ToJSON Eztv.Episode
+instance ToJSON Eztv.Serie
+instance ToJSON Youtube.Video
+instance ToJSON Youtube.Channel
+
+
+-- data Api = Api {
+--         fetch :: [String] -> a
+--        ,list  :: String -> b
+--        ,last  :: b
+-- }
+
 
 loadConfigFile :: IO [(String, [String])]
 loadConfigFile = do
-    configFile <- join $ readFile <$> (++ "/.config/crawler.rc") <$> getHomeDirectory
+    configFile <- join $ readFile . (++ "/.config/crawler.rc") <$> getHomeDirectory
     return $ read configFile
 
 
@@ -53,22 +69,27 @@ spawnFetcher = do
 
 
 runRestServer ::  MVar Crawlable -> IO ()
-runRestServer queue = scotty 8086 $
+runRestServer queue = scotty 8080 $
     get "/:type/:val" $ do
         crawlerType <- param "type" :: ActionM String
         val <- param "val" :: ActionM String
         crawl <- liftIO $ readMVar queue
 
-        let res = case crawlerType of
-                        "serie"  -> show $ fromMaybe (Eztv.Serie "" [])
-                                         $ find (\serie -> serie^.Eztv.serieName == val) (crawl^.series)
-                        "youtube" ->show $ fromMaybe (Youtube.Channel "" [])
-                                         $ find (\channel -> channel^.Youtube.name == val) (crawl^.channels)
+        let res = case (crawlerType,val) of
+                        ("serie", "list") -> encodePretty $  [serie^.Eztv.serieName | serie <- crawl^.series]
+                        ("serie", "last") -> encodePretty $ join [take 1 $ serie^.Eztv.episodes | serie <- crawl^.series]
+                        ("serie", _)      -> encodePretty $ fromMaybe (Eztv.Serie "" [])
+                                                  $ find (\serie -> serie^.Eztv.serieName == val) (crawl^.series)
 
-                        _        -> "tata"
+                        ("youtube", "list") -> encodePretty $ [channel^.Youtube.name | channel <- crawl^.channels]
+                        ("youtube", "last") -> encodePretty $ join [take 1 $ channel^.Youtube.videos | channel <- crawl^.channels]
+                        ("youtube", _)      -> encodePretty $ fromMaybe (Youtube.Channel "" [])
+                                                    $ find (\channel -> channel^.Youtube.name == val) (crawl^.channels)
 
-
-        raw $ BC.pack res
+                        _        -> encodePretty $  ("tata" :: String)
+        setHeader "Content-type" "application/json; charset=utf-8"
+        -- liftIO $ print res
+        raw res
 
 main :: IO ()
 main = do

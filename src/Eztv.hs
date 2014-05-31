@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Eztv where
 
@@ -13,7 +14,7 @@ import           Control.Monad
 import           Data.Maybe
 
 import           Control.Lens
-
+import           GHC.Generics
 
 data Episode = Episode { _name      :: String
                         ,_magnetURI :: String
@@ -21,12 +22,12 @@ data Episode = Episode { _name      :: String
                         ,_link      :: String
                         ,_fileName  :: String
 
-                        } deriving (Show,Read)
+                        } deriving (Show,Read, Generic)
 
 data Serie = Serie { _serieName :: String
                     ,_episodes  :: [Episode]
 
-                   } deriving (Show, Read)
+                   } deriving (Show, Read, Generic)
 
 $(makeLenses ''Episode)
 $(makeLenses ''Serie)

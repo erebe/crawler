@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Youtube where
 
@@ -13,18 +14,19 @@ import           Data.Maybe
 import           Control.Lens
 import           Control.Arrow((&&&), (>>>))
 import qualified Text.XML.Light as XML
+import           GHC.Generics
 
 
 data Video = Video { _titre     :: String
                     ,_url       :: String
                     ,_thumbnail :: String
 
-                   } deriving (Show, Read)
+                   } deriving (Show, Read, Generic)
 
 data Channel = Channel { _name   :: String
                         ,_videos :: [Video]
 
-                       } deriving (Show, Read)
+                       } deriving (Show, Read, Generic)
 
 $(makeLenses ''Video)
 $(makeLenses ''Channel)

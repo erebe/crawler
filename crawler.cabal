@@ -16,8 +16,9 @@ Executable          crawler
     Build-Depends:       base, bytestring, monad-control, async,
                          http-conduit, http-types, failure,
                          transformers, lifted-base, xml, lens,
-                         directory, unbounded-delays, scotty
+                         directory, unbounded-delays, scotty,
+                         aeson, aeson-pretty, text
 
 Library
-    ghc-options:     -O3 -Wall 
+    ghc-options:     -O3 -Wall
 
