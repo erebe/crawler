@@ -17,8 +17,8 @@ Executable          crawler
                          http-conduit, http-types, failure,
                          transformers, lifted-base, xml, lens,
                          directory, unbounded-delays, scotty,
-                         aeson, aeson-pretty, text
+                         aeson, aeson-pretty, MissingH, ghc-prim
 
 Library
-    ghc-options:     -O3 -Wall
+    ghc-options:     -O3 -Wall 
 
