@@ -15,12 +15,12 @@ import Control.Concurrent.Thread.Delay(delay)
 
 import Web.Scotty
 import Control.Monad.IO.Class(liftIO)
-import Data.List(find)
-import Control.Lens
+import Control.Lens hiding ((.=), contains)
 
 import Data.Aeson
 import Data.Aeson.Encode.Pretty
 
+import Data.List.Utils(contains)
 import GHC.Generics
 
 instance ToJSON Eztv.Episode
@@ -32,34 +32,32 @@ instance ToJSON API
 data API = Youtube [Youtube.Channel]
            | Serie [Eztv.Serie] deriving (Show, Generic)
 
--- data Elem = Elem { name :: String }
 
 class ApiAction a where
     listA :: a -> Maybe (ActionM ())
-    lastA :: a -> Maybe (ActionM ()) 
+    lastA :: a -> Maybe (ActionM ())
     findA :: String -> a ->  Maybe (ActionM ())
     dispatch :: String -> a -> Maybe (ActionM ())
 
 instance ApiAction API where
-    listA api | Serie series <- api     = Just $ raw . encodePretty $ series^..traverse.Eztv.serieName 
+    listA api | Serie series <- api     = Just $ raw . encodePretty $ series^..traverse.Eztv.serieName
               | Youtube channels <- api = Just $ raw . encodePretty $ channels^..traverse.Youtube.name
               | otherwise  =  Nothing
 
-    lastA api | Serie series <- api     = Just $ raw . encodePretty . join $ take 1 <$> series^..traverse.Eztv.episodes
-              | Youtube channels <- api = Just $ raw . encodePretty . join $ take 1 <$> channels^..traverse.Youtube.videos
+    lastA api | Serie series <- api     = Just $ raw . encodePretty $ [serie & Eztv.episodes .~ [serie^.Eztv.episodes^?!traverse] | serie <- series]
+              | Youtube channels <- api = Just $ raw . encodePretty $ [channel & Youtube.videos .~ [channel^.Youtube.videos^?!traverse] | channel <- channels]
               | otherwise = Nothing
 
 
-    findA toFind api | Serie series <- api     = Just $ raw . encodePretty $ fromMaybe (Eztv.Serie "" [])
-                                                                           $ find (\serie -> serie^.Eztv.serieName == toFind) series
-                     | Youtube channels <- api = Just $ raw . encodePretty $ fromMaybe (Youtube.Channel "" [])
-                                                                           $ find (\channel -> channel^.Youtube.name == toFind) channels
+    findA toFind api | Serie series <- api     = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> contains toFind (serie^.Eztv.serieName))
+                     | Youtube channels <- api = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> contains toFind (channel^.Youtube.name))
                      | otherwise = Nothing
 
-    dispatch arg | "list" <- arg = listA  
-                 | "last" <- arg = lastA 
-                 | otherwise = findA arg 
-                   
+    dispatch arg | "list" <- arg = listA
+                 | "last" <- arg = lastA
+                 | ""     <- arg = listA
+                 | otherwise = findA arg
+
 
 
 
@@ -109,7 +107,7 @@ runRestServer queue = scotty 8080 $
 
         setHeader "Content-type" "application/json; charset=utf-8"
         -- liftIO $ print res
-        case res of 
+        case res of
             Just action -> action
             Nothing -> next
 
