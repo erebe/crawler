@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE PatternGuards #-}
 
 import qualified Eztv
 import qualified Youtube
@@ -18,27 +19,49 @@ import Data.List(find)
 import Control.Lens
 
 import Data.Aeson
-import GHC.Generics
 import Data.Aeson.Encode.Pretty
 
+import GHC.Generics
 
-data Crawlable = Crawlable {
-                      _channels :: [Youtube.Channel]
-                     ,_series   :: [Eztv.Serie]
-                 } deriving (Show, Read, Generic)
-
-$(makeLenses ''Crawlable)
 instance ToJSON Eztv.Episode
 instance ToJSON Eztv.Serie
 instance ToJSON Youtube.Video
 instance ToJSON Youtube.Channel
+instance ToJSON API
+
+data API = Youtube [Youtube.Channel]
+           | Serie [Eztv.Serie] deriving (Show, Generic)
+
+-- data Elem = Elem { name :: String }
+
+class ApiAction a where
+    listA :: a -> Maybe (ActionM ())
+    lastA :: a -> Maybe (ActionM ()) 
+    findA :: String -> a ->  Maybe (ActionM ())
+    dispatch :: String -> a -> Maybe (ActionM ())
+
+instance ApiAction API where
+    listA api | Serie series <- api     = Just $ raw . encodePretty $ series^..traverse.Eztv.serieName 
+              | Youtube channels <- api = Just $ raw . encodePretty $ channels^..traverse.Youtube.name
+              | otherwise  =  Nothing
+
+    lastA api | Serie series <- api     = Just $ raw . encodePretty . join $ take 1 <$> series^..traverse.Eztv.episodes
+              | Youtube channels <- api = Just $ raw . encodePretty . join $ take 1 <$> channels^..traverse.Youtube.videos
+              | otherwise = Nothing
 
 
--- data Api = Api {
---         fetch :: [String] -> a
---        ,list  :: String -> b
---        ,last  :: b
--- }
+    findA toFind api | Serie series <- api     = Just $ raw . encodePretty $ fromMaybe (Eztv.Serie "" [])
+                                                                           $ find (\serie -> serie^.Eztv.serieName == toFind) series
+                     | Youtube channels <- api = Just $ raw . encodePretty $ fromMaybe (Youtube.Channel "" [])
+                                                                           $ find (\channel -> channel^.Youtube.name == toFind) channels
+                     | otherwise = Nothing
+
+    dispatch arg | "list" <- arg = listA  
+                 | "last" <- arg = lastA 
+                 | otherwise = findA arg 
+                   
+
+
 
 
 loadConfigFile :: IO [(String, [String])]
@@ -47,9 +70,9 @@ loadConfigFile = do
     return $ read configFile
 
 
-spawnFetcher :: IO (MVar Crawlable)
+spawnFetcher :: IO (MVar [(String, API)])
 spawnFetcher = do
-        fetchRes <- newMVar $ Crawlable [] []
+        fetchRes <- newMVar []
         _ <- async $ fetcher fetchRes
         return fetchRes
 
@@ -64,32 +87,32 @@ spawnFetcher = do
                     series''   <- wait series'
                     putStrLn "Done fetching !"
 
-                    _ <- swapMVar queue $ Crawlable channels'' series''
+                    let dat = [("serie", Serie series'' )
+                              ,("youtube", Youtube channels'')
+                              ]
+
+
+                    _ <- swapMVar queue $ dat
                     delay (1000000 * 60 * 60 * 2)
 
 
-runRestServer ::  MVar Crawlable -> IO ()
+runRestServer ::  MVar [(String, API)] -> IO ()
 runRestServer queue = scotty 8080 $
     get "/:type/:val" $ do
         crawlerType <- param "type" :: ActionM String
         val <- param "val" :: ActionM String
-        crawl <- liftIO $ readMVar queue
+        apis <- liftIO $ readMVar queue
 
-        let res = case (crawlerType,val) of
-                        ("serie", "list") -> encodePretty $  [serie^.Eztv.serieName | serie <- crawl^.series]
-                        ("serie", "last") -> encodePretty $ join [take 1 $ serie^.Eztv.episodes | serie <- crawl^.series]
-                        ("serie", _)      -> encodePretty $ fromMaybe (Eztv.Serie "" [])
-                                                  $ find (\serie -> serie^.Eztv.serieName == val) (crawl^.series)
+        let res = case lookup crawlerType apis of
+                        Just api -> dispatch val api
+                        _        -> Nothing
 
-                        ("youtube", "list") -> encodePretty $ [channel^.Youtube.name | channel <- crawl^.channels]
-                        ("youtube", "last") -> encodePretty $ join [take 1 $ channel^.Youtube.videos | channel <- crawl^.channels]
-                        ("youtube", _)      -> encodePretty $ fromMaybe (Youtube.Channel "" [])
-                                                    $ find (\channel -> channel^.Youtube.name == val) (crawl^.channels)
-
-                        _        -> encodePretty $  ("tata" :: String)
         setHeader "Content-type" "application/json; charset=utf-8"
         -- liftIO $ print res
-        raw res
+        case res of 
+            Just action -> action
+            Nothing -> next
+
 
 main :: IO ()
 main = do
