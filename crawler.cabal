@@ -11,7 +11,7 @@ build-type:          Simple
 
 Executable          crawler
     hs-source-dirs:       src
-    ghc-options:         -Wall -O3
+    ghc-options:         -threaded -Wall -O3
     main-is:             main.hs
     Build-Depends:       base, bytestring, monad-control, async,
                          http-conduit, http-types, failure,
