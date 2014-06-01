@@ -7,6 +7,7 @@ module Eztv where
 import           Http(getPages)
 
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Char8 as BC
 
 import qualified Text.XML.Light as XML
 import           Control.Applicative
@@ -16,7 +17,10 @@ import           Data.Maybe
 import           Control.Lens
 import           GHC.Generics
 
-data Episode = Episode { _name      :: String
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
+
+data Episode = Episode { _name      :: T.Text
                         ,_magnetURI :: String
                         ,_date      :: String
                         ,_link      :: String
@@ -35,7 +39,7 @@ $(makeLenses ''Serie)
 
 
 extractData :: BL.ByteString -> [Episode]
-extractData xmlStr = (\el ->  name      .~ extractString (findElemByName "title" el)
+extractData xmlStr = (\el ->  name      .~ (T.decodeUtf8 . BC.pack $ extractString (findElemByName "title" el))
                             $ link      .~ extractString (findElemByName "link" el)
                             $ date      .~ extractString (findElemByName "pubDate" el)
                             $ magnetURI .~ extractString (findElem "magnetURI" "http://xmlns.ezrss.it/0.1/" el)

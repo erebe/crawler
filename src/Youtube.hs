@@ -7,6 +7,7 @@ module Youtube where
 import           Http(getPages)
 
 import qualified Data.ByteString.Lazy       as BL
+import qualified Data.ByteString.Char8      as BC
 
 import           Control.Applicative
 import           Data.Maybe
@@ -16,8 +17,10 @@ import           Control.Arrow((&&&), (>>>))
 import qualified Text.XML.Light as XML
 import           GHC.Generics
 
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 
-data Video = Video { _titre     :: String
+data Video = Video { _titre     :: T.Text
                     ,_url       :: String
                     ,_thumbnail :: String
 
@@ -38,8 +41,8 @@ getChannelURL str = "http://www.youtube.com/user/" ++ str ++ "/videos"
 
 
 toVideo :: String -> String -> Video
-toVideo a b = Video "" "" ""
-              & titre     .~ b
+toVideo a b = Video T.empty "" ""
+              & titre     .~ (T.decodeUtf8 . BC.pack $ b)
               & url       .~ "http://www.youtube.com/watch?v=" ++ a
               & thumbnail .~ "http://i1.ytimg.com/vi/" ++ a ++ "/mqdefault.jpg"
 
