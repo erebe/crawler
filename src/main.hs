@@ -95,7 +95,7 @@ spawnFetcher = do
 
 
 runRestServer ::  MVar [(String, API)] -> IO ()
-runRestServer queue = scotty 8080 $
+runRestServer queue = scotty 8086 $
     get "/:type/:val" $ do
         crawlerType <- param "type" :: ActionM String
         val <- param "val" :: ActionM String
