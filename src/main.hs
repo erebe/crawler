@@ -55,7 +55,7 @@ instance ApiAction API where
 
     dispatch arg | "list" <- arg = listA
                  | "last" <- arg = lastA
-                 | ""     <- arg = listA
+                 | ""     <- arg = lastA
                  | otherwise = findA arg
 
 
