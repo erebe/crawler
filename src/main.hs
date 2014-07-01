@@ -44,8 +44,8 @@ instance ApiAction API where
               | Youtube channels <- api = Just $ raw . encodePretty $ channels^..traverse.Youtube.name
               | otherwise  =  Nothing
 
-    lastA api | Serie series <- api     = Just $ raw . encodePretty $ [serie & Eztv.episodes .~ [serie^.Eztv.episodes^?!traverse] | serie <- series]
-              | Youtube channels <- api = Just $ raw . encodePretty $ [channel & Youtube.videos .~ [channel^.Youtube.videos^?!traverse] | channel <- channels]
+    lastA api | Serie series <- api     = Just $ raw . encodePretty $ [serie & Eztv.episodes .~ take 1 (serie^.Eztv.episodes) | serie <- series]
+              | Youtube channels <- api = Just $ raw . encodePretty $ [channel & Youtube.videos .~ take 1 (channel^.Youtube.videos) | channel <- channels]
               | otherwise = Nothing
 
 
