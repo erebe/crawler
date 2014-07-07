@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -23,6 +24,8 @@ import Data.Aeson.Encode.Pretty
 import Data.List.Utils(contains)
 import GHC.Generics
 
+import Data.Time
+
 instance ToJSON Eztv.Episode
 instance ToJSON Eztv.Serie
 instance ToJSON Youtube.Video
@@ -30,7 +33,8 @@ instance ToJSON Youtube.Channel
 instance ToJSON API
 
 data API = Youtube [Youtube.Channel]
-           | Serie [Eztv.Serie] deriving (Show, Generic)
+         | Serie [Eztv.Serie]
+         deriving (Show, Generic)
 
 
 class ApiAction a where
@@ -62,6 +66,7 @@ instance ApiAction API where
 
 
 
+
 loadConfigFile :: IO [(String, [String])]
 loadConfigFile = do
     configFile <- join $ readFile . (++ "/.config/crawler.rc") <$> getHomeDirectory
@@ -83,7 +88,6 @@ spawnFetcher = do
                     channels'  <- async $ Youtube.fetchChannels (getFromConfig "youtube" config)
                     channels'' <- wait channels'
                     series''   <- wait series'
-                    putStrLn "Done fetching !"
 
                     let dat = [("serie", Serie series'' )
                               ,("youtube", Youtube channels'')
@@ -91,6 +95,7 @@ spawnFetcher = do
 
 
                     _ <- swapMVar queue $ dat
+                    getCurrentTime >>= putStrLn . ("Done fetching :: " ++ ) . show
                     delay (1000000 * 60 * 60 * 2)
 
 
