@@ -1,15 +1,15 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE DataKinds #-}
 
 import qualified Eztv
 import qualified Youtube
 import System.Directory(getHomeDirectory)
 import Control.Applicative((<$>))
 import Control.Monad(join, forever)
-import Data.Maybe(fromMaybe)
+import Data.Maybe(fromMaybe, catMaybes)
 import Control.Concurrent.Async(async, wait)
 import Control.Concurrent.MVar(MVar, newMVar, readMVar, swapMVar)
 import Control.Concurrent.Thread.Delay(delay)
@@ -25,6 +25,7 @@ import Data.List.Utils(contains)
 import GHC.Generics
 
 import Data.Time
+import System.Timeout
 
 instance ToJSON Eztv.Episode
 instance ToJSON Eztv.Serie
@@ -35,6 +36,11 @@ instance ToJSON API
 data API = Youtube [Youtube.Channel]
          | Serie [Eztv.Serie]
          deriving (Show, Generic)
+
+buildSerie :: [String] -> IO (String, API)
+buildSerie args = (\res -> ("serie", Serie res)) <$> Eztv.fetchSeries args
+buildYoutube :: [String] -> IO (String, API)
+buildYoutube args = (\res -> ("youtube", Youtube res)) <$> Youtube.fetchChannels args
 
 
 class ApiAction a where
@@ -81,20 +87,18 @@ spawnFetcher = do
 
         where
             getFromConfig key cfg = fromMaybe [] $ lookup key cfg
+            waitForOneMin = let micro = (6 :: Int) in timeout (10^micro * 60)
+
             fetcher queue = forever $ do
                     putStrLn "Start fetching !"
                     config     <- loadConfigFile
-                    series'    <- async $ Eztv.fetchSeries (getFromConfig "eztv" config)
-                    channels'  <- async $ Youtube.fetchChannels (getFromConfig "youtube" config)
-                    channels'' <- wait channels'
-                    series''   <- wait series'
+                    let apis = [ buildSerie (getFromConfig "eztv" config)
+                               , buildYoutube (getFromConfig "youtube" config)
+                               ]
+                    handles <- mapM (async . waitForOneMin)  apis
+                    dat <- catMaybes <$> mapM wait handles
 
-                    let dat = [("serie", Serie series'' )
-                              ,("youtube", Youtube channels'')
-                              ]
-
-
-                    _ <- swapMVar queue $ dat
+                    _ <- swapMVar queue dat
                     getCurrentTime >>= putStrLn . ("Done fetching :: " ++ ) . show
                     delay (1000000 * 60 * 60 * 2)
 
@@ -112,9 +116,8 @@ runRestServer queue = scotty 8086 $
 
         setHeader "Content-type" "application/json; charset=utf-8"
         -- liftIO $ print res
-        case res of
-            Just action -> action
-            Nothing -> next
+        let action = fromMaybe next res
+        action
 
 
 main :: IO ()
