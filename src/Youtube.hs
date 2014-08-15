@@ -83,8 +83,10 @@ decodeAPI string = do
              return $ forM items $ \jitem ->
                     flip parseMaybe jitem $ \item ->
                         Video <$> item .: "title"
-                              <*> (item .: "content" >>= (.: "5"))
+                              <*> (format <$> (item .: "content" >>= (.: "5")))
                               <*> (item .: "thumbnail" >>= (.: "hqDefault"))
+
+    where format = (++ "?vq=hd720") . takeWhile (/= '?') 
 
 fetchChannels :: [String] -> IO [Channel]
 fetchChannels channelsName = do
