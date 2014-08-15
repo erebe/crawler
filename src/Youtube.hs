@@ -88,7 +88,7 @@ decodeAPI string = do
 
 fetchChannels :: [String] -> IO [Channel]
 fetchChannels channelsName = do
-    youtubeVideos <- getPages (return . decodeAPI) (getChannelURL <$> channelsName)
+    youtubeVideos <- getPages decodeAPI (getChannelURL <$> channelsName)
 
     let channels =  flip fmap (zip channelsName youtubeVideos) $ \(chName, vids) ->
                        Channel chName (fromMaybe [] (join vids))

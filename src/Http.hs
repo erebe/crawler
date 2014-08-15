@@ -10,21 +10,17 @@ import           Network.HTTP.Types.Status
 
 import           Control.Monad.IO.Class(MonadIO, liftIO)
 import           Control.Monad.Trans.Maybe(MaybeT, runMaybeT)
-import           Control.Monad.Trans.Control(MonadBaseControl)
 
-import           Control.Applicative
 import           Control.Monad
 
 import qualified Data.ByteString.Lazy as BL
 
 
-getPages :: (MonadBaseControl IO m, MonadIO m) => (BL.ByteString -> IO b) -> [String] -> m [Maybe b]
+getPages :: (BL.ByteString -> b) -> [String] -> IO [Maybe b]
 getPages func urls = withManager $ \m -> mapM (runWorker m) urls
     where
         runWorker m url = do pageBody <- runMaybeT $ worker m url
-                             case func <$> pageBody of
-                                  Just !z -> return <$> liftIO z
-                                  Nothing -> return Nothing
+                             return $ liftM func pageBody 
 
 
 

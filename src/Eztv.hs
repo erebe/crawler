@@ -69,7 +69,7 @@ craftEzrssUrl nameS = protocol ++ baseUrl ++ buildArgs
 
 fetchSeries :: [String] -> IO [Serie]
 fetchSeries seriesNames = do
-    episodes' <- getPages (return . extractData) (craftEzrssUrl <$> seriesNames)
+    episodes' <- getPages extractData (craftEzrssUrl <$> seriesNames)
     let series = (\(nameS, eps) -> serieName .~ nameS
                                  $ episodes .~ fromMaybe [] eps
                                  $ Serie "" []
