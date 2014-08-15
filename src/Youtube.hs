@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Youtube where
 
@@ -20,6 +21,10 @@ import           GHC.Generics
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 
+import Data.Aeson
+import Data.Aeson.Types
+import Control.Monad(forM, join)
+
 data Video = Video { _titre     :: T.Text
                     ,_url       :: String
                     ,_thumbnail :: String
@@ -31,12 +36,14 @@ data Channel = Channel { _name   :: String
 
                        } deriving (Show, Read, Generic)
 
+
+
 $(makeLenses ''Video)
 $(makeLenses ''Channel)
 
 
 getChannelURL :: String -> String
-getChannelURL str = "http://www.youtube.com/user/" ++ str ++ "/videos"
+getChannelURL str = "https://gdata.youtube.com/feeds/api/users/" ++ str ++ "/uploads?v=2&alt=jsonc&ordered=published"
 
 
 
@@ -67,15 +74,24 @@ extractVideos htmlPage =
                                                            && isJust (XML.findAttr (XML.QName "title" Nothing Nothing) el))
                                 <$> XML.filterElement (\el -> fromMaybe "" (XML.findAttr (XML.QName "id" Nothing Nothing) el) == "video-page-content") ll
 
+decodeAPI :: BL.ByteString -> Maybe [Video]
+decodeAPI string = do
+    result <- decode string
+    join $ flip parseMaybe result $ \obj -> do
+             dataa <- obj .: "data"
+             items <- dataa .: "items" :: Parser [Object]
+             return $ forM items $ \jitem ->
+                    flip parseMaybe jitem $ \item ->
+                        Video <$> item .: "title"
+                              <*> (item .: "content" >>= (.: "5"))
+                              <*> (item .: "thumbnail" >>= (.: "hqDefault"))
 
 fetchChannels :: [String] -> IO [Channel]
 fetchChannels channelsName = do
-        youtubeVideos <- getPages (return . extractVideos) (getChannelURL <$> channelsName)
-        let vids = (\(chName, xs) -> Channel "" []
-                                     & name   .~ chName
-                                     & videos .~ fromMaybe [] xs
+    youtubeVideos <- getPages (return . decodeAPI) (getChannelURL <$> channelsName)
 
-                   ) <$> zip channelsName youtubeVideos
+    let channels =  flip fmap (zip channelsName youtubeVideos) $ \(chName, vids) ->
+                       Channel chName (fromMaybe [] (join vids))
 
-        return vids
+    return channels
 
