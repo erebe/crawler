@@ -1,31 +1,31 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE PatternGuards #-}
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE PatternGuards     #-}
 
+import           Control.Applicative             ((<$>))
+import           Control.Concurrent.Async        (async, wait)
+import           Control.Concurrent.MVar         (MVar, newMVar, readMVar, swapMVar)
+import           Control.Concurrent.Thread.Delay (delay)
+import           Control.Monad                   (forever, join)
+import           Data.Maybe                      (catMaybes, fromMaybe)
 import qualified Eztv
+import           System.Directory                (getHomeDirectory)
 import qualified Youtube
-import System.Directory(getHomeDirectory)
-import Control.Applicative((<$>))
-import Control.Monad(join, forever)
-import Data.Maybe(fromMaybe, catMaybes)
-import Control.Concurrent.Async(async, wait)
-import Control.Concurrent.MVar(MVar, newMVar, readMVar, swapMVar)
-import Control.Concurrent.Thread.Delay(delay)
 
-import Web.Scotty
-import Control.Monad.IO.Class(liftIO)
-import Control.Lens hiding ((.=), contains)
+import           Control.Lens                    hiding (contains, (.=))
+import           Control.Monad.IO.Class          (liftIO)
+import           Web.Scotty
 
-import Data.Aeson
-import Data.Aeson.Encode.Pretty
+import           Data.Aeson
+import           Data.Aeson.Encode.Pretty
 
-import Data.List(isInfixOf)
-import GHC.Generics
+import           Data.List                       (isInfixOf)
+import           GHC.Generics
 
-import Data.Time
-import System.Timeout
+import           Data.Time
+import           System.Timeout
 
 instance ToJSON Eztv.Episode
 instance ToJSON Eztv.Serie
