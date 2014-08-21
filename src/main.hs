@@ -14,7 +14,7 @@ import qualified Eztv
 import           System.Directory                (getHomeDirectory)
 import qualified Youtube
 
-import           Control.Lens                    hiding (contains, (.=))
+import           Control.Lens                    hiding ((.=))
 import           Control.Monad.IO.Class          (liftIO)
 import           Web.Scotty
 
