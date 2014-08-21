@@ -21,7 +21,7 @@ import Control.Lens hiding ((.=), contains)
 import Data.Aeson
 import Data.Aeson.Encode.Pretty
 
-import Data.List.Utils(contains)
+import Data.List(isInfixOf)
 import GHC.Generics
 
 import Data.Time
@@ -59,8 +59,8 @@ instance ApiAction API where
               | otherwise = Nothing
 
 
-    findA toFind api | Serie series <- api     = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> contains toFind (serie^.Eztv.serieName))
-                     | Youtube channels <- api = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> contains toFind (channel^.Youtube.name))
+    findA toFind api | Serie series <- api     = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Eztv.serieName))
+                     | Youtube channels <- api = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Youtube.name))
                      | otherwise = Nothing
 
     dispatch arg | "list" <- arg = listA
