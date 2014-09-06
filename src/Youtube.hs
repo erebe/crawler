@@ -86,7 +86,7 @@ decodeAPI string = do
                               <*> (format <$> (item .: "content" >>= (.: "5")))
                               <*> (item .: "thumbnail" >>= (.: "hqDefault"))
 
-    where format = (++ "?vq=hd720") . takeWhile (/= '?') 
+    where format = (++ "?vq=hd720") . takeWhile (/= '?')
 
 fetchChannels :: [String] -> IO [Channel]
 fetchChannels channelsName = do
