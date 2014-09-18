@@ -87,7 +87,7 @@ spawnFetcher = do
 
         where
             getFromConfig key cfg = fromMaybe [] $ lookup key cfg
-            waitForOneMin = let micro = (6 :: Int) in timeout (10^micro * 60)
+            waitForOneMin = let micro = (6 :: Int) in timeout (10^micro * 60 * 5)
 
             fetcher queue = forever $ do
                     putStrLn "Start fetching !"
