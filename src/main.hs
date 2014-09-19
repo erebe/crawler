@@ -8,7 +8,7 @@ import           Control.Applicative             ((<$>))
 import           Control.Concurrent.Async        (async, wait)
 import           Control.Concurrent.MVar         (MVar, newMVar, readMVar, swapMVar)
 import           Control.Concurrent.Thread.Delay (delay)
-import           Control.Monad                   (forever, guard)
+import           Control.Monad                   (forever, guard, join)
 import           Data.Maybe                      (catMaybes, fromMaybe)
 import qualified Eztv
 import           System.Directory                (getHomeDirectory, doesFileExist)
@@ -128,17 +128,19 @@ spawnFetcher = do
 runRestServer ::  MVar [(String, API)] -> IO ()
 runRestServer queue = scotty 8086 $
     get "/:type/:val" $ do
-        crawlerType <- param "type" :: ActionM String
-        val <- param "val" :: ActionM String
-        apis <- liftIO $ readMVar queue
+        apiType   <- param "type" :: ActionM String
+        apiAction <- param "val"  :: ActionM String
+        apiData   <- liftIO $ readMVar queue
 
-        let res = case lookup crawlerType apis of
-                        Just api -> dispatch val api
-                        _        -> Nothing
+        let api = join $ dispatch apiAction <$> lookup apiType apiData
 
-        setHeader "Content-type" "application/json; charset=utf-8"
-        let action = fromMaybe next res
-        action
+        case api of
+            Just apiResult -> do
+                              setHeader "Content-type" "application/json; charset=utf-8"
+                              apiResult
+
+            Nothing        -> next
+
 
 
 main :: IO ()
