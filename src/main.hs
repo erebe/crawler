@@ -8,10 +8,10 @@ import           Control.Applicative             ((<$>))
 import           Control.Concurrent.Async        (async, wait)
 import           Control.Concurrent.MVar         (MVar, newMVar, readMVar, swapMVar)
 import           Control.Concurrent.Thread.Delay (delay)
-import           Control.Monad                   (forever, join)
+import           Control.Monad                   (forever, guard)
 import           Data.Maybe                      (catMaybes, fromMaybe)
 import qualified Eztv
-import           System.Directory                (getHomeDirectory)
+import           System.Directory                (getHomeDirectory, doesFileExist)
 import qualified Youtube
 
 import           Control.Lens                    hiding ((.=))
@@ -26,6 +26,8 @@ import           GHC.Generics
 
 import           Data.Time
 import           System.Timeout
+
+import           Control.Monad.Trans.Maybe(MaybeT, runMaybeT)
 
 instance ToJSON Eztv.Episode
 instance ToJSON Eztv.Serie
@@ -72,11 +74,27 @@ instance ApiAction API where
 
 
 
---TODO improve configuration handling
 loadConfigFile :: IO [(String, [String])]
 loadConfigFile = do
-    configFile <- join $ readFile . (++ "/.config/crawler.rc") <$> getHomeDirectory
-    return $ read configFile
+      cfg <-  runMaybeT extractConfig
+      case cfg of
+        Just config -> return config
+
+        Nothing     -> do
+                       putStrLn "############################################################"
+                       putStrLn "#############       Config file not found     ##############"
+                       putStrLn "######### Please add one at ~/.config/crawler.rc  ##########"
+                       putStrLn "############################################################"
+                       return []
+
+    where
+        extractConfig :: MaybeT IO [(String, [String])]
+        extractConfig = do
+            configPath    <- liftIO $ (++ "/.config/crawler.rc") <$> getHomeDirectory
+            configPresent <- liftIO $  doesFileExist configPath
+            guard configPresent
+
+            liftIO $ read <$> readFile configPath
 
 
 spawnFetcher :: IO (MVar [(String, API)])
