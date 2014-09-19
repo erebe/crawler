@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -16,6 +15,8 @@ import           Control.Exception as Ex
 
 import qualified Data.ByteString.Lazy as BL
 
+import           System.IO
+
 
 getPages :: (BL.ByteString -> b) -> [String] -> IO [Maybe b]
 getPages func urls = withManager $ \m -> mapM (runWorker m) urls
@@ -30,7 +31,7 @@ worker manager url = msum $ replicate 3 fetchPage
     where
         fetchPage = do
             body <- liftIO $ fetchPageImpl `Ex.catch` \(e :: HttpException) -> do
-                      print e
+                      hPutStrLn stderr $ show e
                       return BL.empty
 
             guard(body /= BL.empty)
