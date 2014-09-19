@@ -90,9 +90,9 @@ loadConfigFile = do
     where
         extractConfig :: MaybeT IO [(String, [String])]
         extractConfig = do
-            configPath    <- liftIO $ (++ "/.config/crawler.rc") <$> getHomeDirectory
-            configPresent <- liftIO $  doesFileExist configPath
-            guard configPresent
+            configPath      <- liftIO $ (++ "/.config/crawler.rc") <$> getHomeDirectory
+            isConfigPresent <- liftIO $ doesFileExist configPath
+            guard isConfigPresent
 
             liftIO $ read <$> readFile configPath
 
@@ -108,16 +108,20 @@ spawnFetcher = do
             waitForOneMin = let micro = (6 :: Int) in timeout (10^micro * 60 * 10)
 
             fetcher queue = forever $ do
-                    getCurrentTime >>= putStrLn . ("Start fetching :: " ++ ) . show
+                    putStrLn "---------------------------------------------------"
+                    putStrLn . ("Start fetching :: " ++ ) . show =<< getCurrentTime
+
                     config     <- loadConfigFile
                     let apis = [ buildSerie (getFromConfig "eztv" config)
                                , buildYoutube (getFromConfig "youtube" config)
                                ]
-                    handles <- mapM (async . waitForOneMin)  apis
-                    dat <- catMaybes <$> mapM wait handles
+                    handles <- mapM (async . waitForOneMin) apis
+                    dat     <- catMaybes <$> mapM wait handles
+                    _       <- swapMVar queue dat
 
-                    _ <- swapMVar queue dat
-                    getCurrentTime >>= putStrLn . ("Done fetching :: " ++ ) . show
+                    putStrLn . ("Done fetching :: " ++ ) . show =<< getCurrentTime
+                    putStrLn "---------------------------------------------------"
+
                     delay (1000000 * 60 * 60 * 2)
 
 
