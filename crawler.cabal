@@ -19,7 +19,7 @@ Executable          crawler
                          transformers, lifted-base, xml, lens,
                          directory, unbounded-delays, scotty,
                          aeson, aeson-pretty, ghc-prim,
-                         text, time, exceptions
+                         text, time, exceptions, unix-time
 
 Library
     ghc-options:     -O3 -Wall 

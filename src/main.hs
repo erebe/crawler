@@ -4,15 +4,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
 
+import qualified Eztv
+import qualified Youtube
+import qualified Weather
+
 import           Control.Applicative             ((<$>), (<*>))
 import           Control.Concurrent.Async        (async, wait)
 import           Control.Concurrent.MVar         (MVar, newMVar, readMVar, swapMVar)
 import           Control.Concurrent.Thread.Delay (delay)
 import           Control.Monad                   (forever, guard)
 import           Data.Maybe                      (catMaybes, fromMaybe)
-import qualified Eztv
 import           System.Directory                (getHomeDirectory, doesFileExist)
-import qualified Youtube
 
 import           Control.Lens                    hiding ((.=))
 import           Control.Monad.IO.Class          (liftIO)
@@ -29,6 +31,8 @@ import           System.Timeout
 
 import           Control.Monad.Trans.Maybe(MaybeT, runMaybeT)
 
+instance ToJSON Weather.Forecast
+instance ToJSON Weather.Weather
 instance ToJSON Eztv.Episode
 instance ToJSON Eztv.Serie
 instance ToJSON Youtube.Video
@@ -37,12 +41,15 @@ instance ToJSON API
 
 data API = Youtube [Youtube.Channel]
          | Serie [Eztv.Serie]
+         | Weather [Weather.Weather]
          deriving (Show, Generic)
 
 buildSerie :: [String] -> IO (String, API)
 buildSerie args = (\res -> ("serie", Serie res)) <$> Eztv.fetchSeries args
 buildYoutube :: [String] -> IO (String, API)
 buildYoutube args = (\res -> ("youtube", Youtube res)) <$> Youtube.fetchChannels args
+buildWeather :: [String] -> IO (String, API)
+buildWeather args = (\res -> ("meteo", Weather res)) <$> Weather.fetchWeathers args
 
 
 class ApiAction a where
@@ -54,10 +61,12 @@ class ApiAction a where
 instance ApiAction API where
     listA api | Serie series <- api     = Just $ raw . encodePretty $ series^..traverse.Eztv.serieName
               | Youtube channels <- api = Just $ raw . encodePretty $ channels^..traverse.Youtube.name
+              | Weather cities <- api   = Just $ raw . encodePretty $ Weather.city <$> cities
               | otherwise  =  Nothing
 
     lastA api | Serie series <- api     = Just $ raw . encodePretty $ [serie & Eztv.episodes .~ take 1 (serie^.Eztv.episodes) | serie <- series]
               | Youtube channels <- api = Just $ raw . encodePretty $ [channel & Youtube.videos .~ take 1 (channel^.Youtube.videos) | channel <- channels]
+              | Weather cities <- api   = Just $ raw . encodePretty $ [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- cities]
               | otherwise = Nothing
 
 
@@ -112,6 +121,7 @@ spawnFetcher = do
                     config   <- loadConfigFile
                     let apis = [ buildSerie (getFromConfig "eztv" config)
                                , buildYoutube (getFromConfig "youtube" config)
+                               , buildWeather (getFromConfig "meteo" config)
                                ]
 
                     putStrLn "---------------------------------------------------"
