@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
 
-import           Control.Applicative             ((<$>))
+import           Control.Applicative             ((<$>), (<*>))
 import           Control.Concurrent.Async        (async, wait)
 import           Control.Concurrent.MVar         (MVar, newMVar, readMVar, swapMVar)
 import           Control.Concurrent.Thread.Delay (delay)
@@ -106,10 +106,11 @@ spawnFetcher = do
         where
             getFromConfig key cfg = fromMaybe [] $ lookup key cfg
             waitForOneMin = let micro = (6 :: Int) in timeout (10^micro * 60 * 10)
+            getLocalTime = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
 
             fetcher queue = forever $ do
                     putStrLn "---------------------------------------------------"
-                    putStrLn . ("Start fetching :: " ++ ) . show =<< getCurrentTime
+                    putStrLn . ("Start fetching :: " ++ ) . show =<< getLocalTime
 
                     config     <- loadConfigFile
                     let apis = [ buildSerie (getFromConfig "eztv" config)
@@ -119,7 +120,7 @@ spawnFetcher = do
                     dat     <- catMaybes <$> mapM wait handles
                     _       <- swapMVar queue dat
 
-                    putStrLn . ("Done fetching :: " ++ ) . show =<< getCurrentTime
+                    putStrLn . ("Done fetching :: " ++ ) . show =<< getLocalTime
                     putStrLn "---------------------------------------------------"
 
                     delay (1000000 * 60 * 60 * 2)
