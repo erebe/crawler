@@ -109,13 +109,14 @@ spawnFetcher = do
             getLocalTime = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
 
             fetcher queue = forever $ do
-                    putStrLn "---------------------------------------------------"
-                    putStrLn . ("Start fetching :: " ++ ) . show =<< getLocalTime
-
-                    config     <- loadConfigFile
+                    config   <- loadConfigFile
                     let apis = [ buildSerie (getFromConfig "eztv" config)
                                , buildYoutube (getFromConfig "youtube" config)
                                ]
+
+                    putStrLn "---------------------------------------------------"
+                    putStrLn . ("Start fetching :: " ++ ) . show =<< getLocalTime
+
                     handles <- mapM (async . waitForOneMin) apis
                     dat     <- catMaybes <$> mapM wait handles
                     _       <- swapMVar queue dat

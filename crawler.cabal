@@ -10,7 +10,7 @@ Maintainer:          Romain Gerard <romain.gerard@erebe.eu>
 build-type:          Simple
 
 Executable          crawler
-    hs-source-dirs:       src
+    hs-source-dirs:       src src/apis
     ghc-options:         -Wall -O3 -threaded
     ghc-prof-options:-prof -fprof-auto -rtsopts
     main-is:             main.hs
