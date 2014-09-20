@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE DeriveGeneric     #-}
+-- {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
 
@@ -12,8 +12,8 @@ import           Control.Applicative             ((<$>), (<*>))
 import           Control.Concurrent.Async        (async, wait)
 import           Control.Concurrent.MVar         (MVar, newMVar, readMVar, swapMVar)
 import           Control.Concurrent.Thread.Delay (delay)
-import           Control.Monad                   (forever, guard)
-import           Data.Maybe                      (catMaybes, fromMaybe)
+import           Control.Monad                   (forever, guard, forM)
+import           Data.Maybe                      (fromMaybe)
 import           System.Directory                (getHomeDirectory, doesFileExist)
 
 import           Control.Lens                    hiding ((.=))
@@ -23,8 +23,8 @@ import           Web.Scotty
 import           Data.Aeson
 import           Data.Aeson.Encode.Pretty
 
-import           Data.List                       (isInfixOf)
-import           GHC.Generics
+import           Data.List                       
+-- import           GHC.Generics
 
 import           Data.Time
 import           System.Timeout
@@ -37,42 +37,67 @@ instance ToJSON Eztv.Episode
 instance ToJSON Eztv.Serie
 instance ToJSON Youtube.Video
 instance ToJSON Youtube.Channel
-instance ToJSON API
 
-data API = Youtube [Youtube.Channel]
-         | Serie [Eztv.Serie]
-         | Weather [Weather.Weather]
-         deriving (Show, Generic)
+newtype Configuration = Configuration [(String, [String])]
 
-buildSerie :: [String] -> IO (String, API)
-buildSerie args = (\res -> ("serie", Serie res)) <$> Eztv.fetchSeries args
-buildYoutube :: [String] -> IO (String, API)
-buildYoutube args = (\res -> ("youtube", Youtube res)) <$> Youtube.fetchChannels args
-buildWeather :: [String] -> IO (String, API)
-buildWeather args = (\res -> ("meteo", Weather res)) <$> Weather.fetchWeathers args
+getConfig :: Configuration -> String -> [String]
+getConfig (Configuration cfg) name = fromMaybe [] $ lookup name cfg
 
 
-class ApiAction a where
+data Service = Video | Meteo | Serie | SMS | Unknown 
+               deriving (Eq)
+
+data ServiceData = VideoData [Youtube.Channel] 
+                 | MeteoData [Weather.Weather]
+                 | SerieData [Eztv.Serie]
+                 | SMSData [Int]
+                 | None
+
+servicesMap :: [(Service, (String, [String] -> IO ServiceData))]
+servicesMap =  [ (Video,  ("video", \args -> VideoData <$> Youtube.fetchChannels args))
+               , (Meteo,  ("meteo", \args -> MeteoData <$> Weather.fetchWeathers args))
+               , (Serie,  ("serie", \args -> SerieData <$> Eztv.fetchSeries args))
+               , (SMS,    ("sms",   \_ -> return None))
+               ]
+
+instance Show Service where
+    show service = fromMaybe "Unknown" $ fst
+                   <$> lookup service servicesMap
+
+strToService :: String -> Service
+strToService str = fromMaybe Unknown $ fst 
+                   <$> find ((== str) . fst . snd) servicesMap
+
+
+fetchServiceData :: Service -> [String] -> IO ServiceData
+fetchServiceData service args = case fetcher of
+                                    Just fetcher' -> fetcher' args
+                                    _             -> return None
+    where
+        fetcher = snd <$> lookup service servicesMap
+
+
+class ServiceAction a where
     listA :: a -> Maybe (ActionM ())
     lastA :: a -> Maybe (ActionM ())
     findA :: String -> a ->  Maybe (ActionM ())
     dispatch :: String -> a -> Maybe (ActionM ())
 
-instance ApiAction API where
-    listA api | Serie series <- api     = Just $ raw . encodePretty $ series^..traverse.Eztv.serieName
-              | Youtube channels <- api = Just $ raw . encodePretty $ channels^..traverse.Youtube.name
-              | Weather cities <- api   = Just $ raw . encodePretty $ Weather.city <$> cities
-              | otherwise  =  Nothing
+instance ServiceAction ServiceData where
+    listA (SerieData series)   = Just $ raw . encodePretty $ series^..traverse.Eztv.serieName
+    listA (VideoData channels) = Just $ raw . encodePretty $ channels^..traverse.Youtube.name
+    listA (MeteoData cities)   = Just $ raw . encodePretty $ Weather.city <$> cities
+    listA _                    = Nothing
 
-    lastA api | Serie series <- api     = Just $ raw . encodePretty $ [serie & Eztv.episodes .~ take 1 (serie^.Eztv.episodes) | serie <- series]
-              | Youtube channels <- api = Just $ raw . encodePretty $ [channel & Youtube.videos .~ take 1 (channel^.Youtube.videos) | channel <- channels]
-              | Weather cities <- api   = Just $ raw . encodePretty $ [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- cities]
-              | otherwise = Nothing
+    lastA (SerieData series)   = Just $ raw . encodePretty $ [serie & Eztv.episodes .~ take 1 (serie^.Eztv.episodes) | serie <- series]
+    lastA (VideoData channels) = Just $ raw . encodePretty $ [channel & Youtube.videos .~ take 1 (channel^.Youtube.videos) | channel <- channels]
+    lastA (MeteoData cities)   = Just $ raw . encodePretty $ [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- cities]
+    lastA _                    = Nothing
 
 
-    findA toFind api | Serie series <- api     = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Eztv.serieName))
-                     | Youtube channels <- api = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Youtube.name))
-                     | otherwise = Nothing
+    findA toFind (SerieData series)   = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Eztv.serieName))
+    findA toFind (VideoData channels) = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Youtube.name))
+    findA _ _                         = Nothing
 
     dispatch arg | "list" <- arg = listA
                  | "last" <- arg = lastA
@@ -83,18 +108,18 @@ instance ApiAction API where
 
 
 
-loadConfigFile :: IO [(String, [String])]
+loadConfigFile :: IO Configuration
 loadConfigFile = do
       cfg <-  runMaybeT extractConfig
       case cfg of
-        Just config -> return config
+        Just config -> return $ Configuration config
 
         Nothing     -> do
                        putStrLn "############################################################"
                        putStrLn "#############       Config file not found     ##############"
                        putStrLn "######### Please add one at ~/.config/crawler.rc  ##########"
                        putStrLn "############################################################"
-                       return []
+                       return $ Configuration []
 
     where
         extractConfig :: MaybeT IO [(String, [String])]
@@ -106,30 +131,35 @@ loadConfigFile = do
             liftIO $ read <$> readFile configPath
 
 
-spawnFetcher :: IO (MVar [(String, API)])
+spawnFetcher :: IO (MVar [(Service, ServiceData)])
 spawnFetcher = do
         fetchRes <- newMVar []
         _ <- async $ fetcher fetchRes
         return fetchRes
 
         where
-            getFromConfig key cfg = fromMaybe [] $ lookup key cfg
             waitForOneMin = let micro = (6 :: Int) in timeout (10^micro * 60 * 10)
             getLocalTime = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
+            services = [Video, Serie, Meteo]
 
             fetcher queue = forever $ do
                     config   <- loadConfigFile
-                    let apis = [ buildSerie (getFromConfig "eztv" config)
-                               , buildYoutube (getFromConfig "youtube" config)
-                               , buildWeather (getFromConfig "meteo" config)
-                               ]
+                    let fetchers = (\service -> (service, fetchServiceData service (getConfig config $ show service)))
+                                   <$> services
 
                     putStrLn "---------------------------------------------------"
                     putStrLn . ("Start fetching :: " ++ ) . show =<< getLocalTime
 
-                    handles <- mapM (async . waitForOneMin) apis
-                    dat     <- catMaybes <$> mapM wait handles
-                    _       <- swapMVar queue dat
+                    handles      <- forM fetchers $ \(service, fetcher') -> do
+                                       handle <- async $ waitForOneMin fetcher' 
+                                       return (service, handle)
+
+                    servicesData <- forM handles $ \(service, handle) -> do
+                                        res <- wait handle
+                                        return $ case res of
+                                                    Just d -> (service, d)
+                                                    _      -> (service, None)
+                    _       <- swapMVar queue servicesData
 
                     putStrLn . ("Done fetching :: " ++ ) . show =<< getLocalTime
                     putStrLn "---------------------------------------------------"
@@ -137,14 +167,14 @@ spawnFetcher = do
                     delay (1000000 * 60 * 60 * 2)
 
 
-runRestServer ::  MVar [(String, API)] -> IO ()
+runRestServer ::  MVar [(Service, ServiceData)] -> IO ()
 runRestServer queue = scotty 8086 $
     get "/:type/:val" $ do
         service   <- param "type" :: ActionM String
         action    <- param "val"  :: ActionM String
         services  <- liftIO $ readMVar queue
 
-        let requestResult = dispatch action =<< lookup service services
+        let requestResult = dispatch action =<< lookup (strToService service) services
 
         case requestResult of
             Just result -> do
