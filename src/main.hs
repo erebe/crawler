@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE DataKinds         #-}
--- {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
 
@@ -19,12 +18,12 @@ import           System.Directory                (getHomeDirectory, doesFileExis
 import           Control.Lens                    hiding ((.=))
 import           Control.Monad.IO.Class          (liftIO)
 import           Web.Scotty
+import qualified Data.Text as T
 
 import           Data.Aeson
 import           Data.Aeson.Encode.Pretty
 
 import           Data.List                       
--- import           GHC.Generics
 
 import           Data.Time
 import           System.Timeout
@@ -97,6 +96,9 @@ instance ServiceAction ServiceData where
 
     findA toFind (SerieData series)   = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Eztv.serieName))
     findA toFind (VideoData channels) = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Youtube.name))
+    findA toFind (MeteoData cities)   = Just $ raw . encodePretty $ [ city | city <- cities, T.toLower (T.pack toFind) 
+                                                                                             `T.isInfixOf`
+                                                                                             T.toLower (Weather.city city)]
     findA _ _                         = Nothing
 
     dispatch arg | "list" <- arg = listA
