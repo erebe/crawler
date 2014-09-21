@@ -23,7 +23,7 @@ import qualified Data.Text as T
 import           Data.Aeson
 import           Data.Aeson.Encode.Pretty
 
-import           Data.List                       
+import           Data.List
 
 import           Data.Time
 import           System.Timeout
@@ -43,10 +43,10 @@ getConfig :: Configuration -> String -> [String]
 getConfig (Configuration cfg) name = fromMaybe [] $ lookup name cfg
 
 
-data Service = Video | Meteo | Serie | SMS | Unknown 
+data Service = Video | Meteo | Serie | SMS | Unknown
                deriving (Eq)
 
-data ServiceData = VideoData [Youtube.Channel] 
+data ServiceData = VideoData [Youtube.Channel]
                  | MeteoData [Weather.Weather]
                  | SerieData [Eztv.Serie]
                  | SMSData [Int]
@@ -64,7 +64,7 @@ instance Show Service where
                    <$> lookup service servicesMap
 
 strToService :: String -> Service
-strToService str = fromMaybe Unknown $ fst 
+strToService str = fromMaybe Unknown $ fst
                    <$> find ((== str) . fst . snd) servicesMap
 
 
@@ -96,7 +96,7 @@ instance ServiceAction ServiceData where
 
     findA toFind (SerieData series)   = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Eztv.serieName))
     findA toFind (VideoData channels) = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Youtube.name))
-    findA toFind (MeteoData cities)   = Just $ raw . encodePretty $ [ city | city <- cities, T.toLower (T.pack toFind) 
+    findA toFind (MeteoData cities)   = Just $ raw . encodePretty $ [ city | city <- cities, T.toLower (T.pack toFind)
                                                                                              `T.isInfixOf`
                                                                                              T.toLower (Weather.city city)]
     findA _ _                         = Nothing
@@ -153,7 +153,7 @@ spawnFetcher = do
                     putStrLn . ("Start fetching :: " ++ ) . show =<< getLocalTime
 
                     handles      <- forM fetchers $ \(service, fetcher') -> do
-                                       handle <- async $ waitForOneMin fetcher' 
+                                       handle <- async $ waitForOneMin fetcher'
                                        return (service, handle)
 
                     servicesData <- forM handles $ \(service, handle) -> do
