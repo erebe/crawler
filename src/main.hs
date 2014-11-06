@@ -170,7 +170,7 @@ spawnFetcher = do
 
 
 runRestServer ::  MVar [(Service, ServiceData)] -> IO ()
-runRestServer queue = scotty 8086 $
+runRestServer queue = scotty 8086 $ do
     get "/:type/:val" $ do
         service   <- param "type" :: ActionM String
         action    <- param "val"  :: ActionM String
@@ -185,6 +185,9 @@ runRestServer queue = scotty 8086 $
 
             Nothing     -> next
 
+    notFound $ do
+        setHeader "Content-type" "text/html; charset=utf-8"
+        file "resources/index.html"
 
 
 main :: IO ()
