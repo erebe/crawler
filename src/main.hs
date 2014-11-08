@@ -6,6 +6,7 @@
 import qualified Eztv
 import qualified Youtube
 import qualified Weather
+import qualified Anime
 
 import           Control.Applicative             ((<$>), (<*>))
 import           Control.Concurrent.Async        (async, wait)
@@ -38,6 +39,8 @@ instance ToJSON Eztv.Episode
 instance ToJSON Eztv.Serie
 instance ToJSON Youtube.Video
 instance ToJSON Youtube.Channel
+instance ToJSON Anime.Episode
+instance ToJSON Anime.Anime
 
 newtype Configuration = Configuration [(String, [String])]
 
@@ -45,12 +48,13 @@ getConfig :: Configuration -> String -> [String]
 getConfig (Configuration cfg) name = fromMaybe [] $ lookup name cfg
 
 
-data Service = Video | Meteo | Serie | SMS | Unknown
+data Service = Video | Meteo | Serie | SMS | Anime | Unknown 
                deriving (Eq)
 
 data ServiceData = VideoData [Youtube.Channel]
                  | MeteoData [Weather.Weather]
                  | SerieData [Eztv.Serie]
+                 | AnimeData [Anime.Anime]
                  | SMSData [Int]
                  | None
 
@@ -58,6 +62,7 @@ servicesMap :: [(Service, (String, [String] -> IO ServiceData))]
 servicesMap =  [ (Video,  ("video", \args -> VideoData <$> Youtube.fetchChannels args))
                , (Meteo,  ("meteo", \args -> MeteoData <$> Weather.fetchWeathers args))
                , (Serie,  ("serie", \args -> SerieData <$> Eztv.fetchSeries args))
+               , (Anime,  ("anime", \args -> AnimeData <$> Anime.fetchAnime args))
                , (SMS,    ("sms",   \_ -> return None))
                ]
 
@@ -88,16 +93,19 @@ instance ServiceAction ServiceData where
     listA (SerieData series)   = Just $ raw . encodePretty $ series^..traverse.Eztv.serieName
     listA (VideoData channels) = Just $ raw . encodePretty $ channels^..traverse.Youtube.name
     listA (MeteoData cities)   = Just $ raw . encodePretty $ Weather.city <$> cities
+    listA (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traverse.Anime.title
     listA _                    = Nothing
 
     lastA (SerieData series)   = Just $ raw . encodePretty $ [serie & Eztv.episodes .~ take 1 (serie^.Eztv.episodes) | serie <- series]
     lastA (VideoData channels) = Just $ raw . encodePretty $ [channel & Youtube.videos .~ take 1 (channel^.Youtube.videos) | channel <- channels]
     lastA (MeteoData cities)   = Just $ raw . encodePretty $ [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- cities]
+    lastA (AnimeData animes)   = Just $ raw . encodePretty $ [ anime & Anime.episodes .~ take 1 (anime^.Anime.episodes)| anime <- animes]
     lastA _                    = Nothing
 
 
     findA toFind (SerieData series)   = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Eztv.serieName))
     findA toFind (VideoData channels) = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Youtube.name))
+    findA toFind (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traversed.filtered (\anime -> toFind `isInfixOf` (anime^.Anime.title))
     findA toFind (MeteoData cities)   = Just $ raw . encodePretty $ [ city | city <- cities, T.toLower (T.pack toFind)
                                                                                              `T.isInfixOf`
                                                                                              T.toLower (Weather.city city)]
@@ -144,7 +152,7 @@ spawnFetcher = do
         where
             waitForOneMin = let micro = (6 :: Int) in timeout (10^micro * 60 * 10)
             getLocalTime = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
-            services = [Video, Serie, Meteo]
+            services = [Video, Serie, Meteo, Anime]
 
             fetcher queue = forever $ do
                     config   <- loadConfigFile

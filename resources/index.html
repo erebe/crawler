@@ -31,6 +31,17 @@
             height: 300px;
         }
 
+        .itemAnime {
+            float    : left;
+            margin   : 10px;
+            width    : 250px;
+            height   : 350px;
+        }
+
+        .thumbnail { 
+            overflow: hidden;
+        }
+
     </style>
 
     <!-- Custom styles for this template -->
@@ -52,10 +63,10 @@
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Videos</a></li>
+            <li class="active"><a href="#videos">Videos</a></li>
             <li><a href="#series">Series</a></li>
+            <li><a href="#animes">Anime</a></li>
             <li><a href="#manga">Manga</a></li>
-            <li><a href="#contact">Anime</a></li>
             <li><a href="#contact">Weather</a></li>
           </ul>
         </div><!--/.nav-collapse -->
@@ -64,6 +75,7 @@
 
     <section id="videos"><h1 style="text-align:center;">Videos</h1></section>
     <section id="series"><h1 style="text-align:center;">Series</h1></section>
+    <section id="animes"><h1 style="text-align:center;">Animes</h1></section>
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
@@ -74,7 +86,19 @@
 
         callAjax("/video/", loadVideos);
         callAjax("/serie/", loadSeries);
+        callAjax("/anime/", loadAnimes);
+
 };
+
+function loadAnimes(data)
+{
+    var json = JSON.parse(data);
+    str = json.filter(function(anime) { return anime._episodes.length} )
+              .map(function(anime) { return generateAnimeView(anime, anime._episodes[0]); })
+              .join("");
+
+    $("#animes").append(str);
+}
 
 function loadVideos(data)
 {
@@ -103,6 +127,30 @@ function loadSeries(data)
 
 }
 
+function generateAnimeView(anime, episode)
+{
+    var str = '';
+    str += '<div class="itemAnime">';
+        str += '<div class="header" style="height: 10%">';
+        str += '<a><h4 style="margin:0px;">' + anime._title.capitalize() + '</h4></a>';
+        str += "</div>";
+
+        str += '<div class="thumbnail" style="height:60%; width:60%;">';
+        str += '<a href="' + episode._magnetURI + '">';
+        str += '<img src="' + anime._thumbnail + '" /></a>';
+        str += '</div>';
+
+
+        str += '<div class="footer" style="height:30%;">';
+        str += '<a href="' + episode._magnetURI + '">';
+        str += '<p style="margin:0px;"><b>' + episode._name + '</b></p>';
+        str += '<p style="margin:0px;">' + new Date(episode._date * 1000) + '</p>';
+        str += '</a>';
+        str += '</div>';
+    str += '</div>';
+
+    return str;
+}
 
 function generateSerieView(serieName, episode)
 {
