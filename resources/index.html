@@ -52,7 +52,7 @@
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#videos">Videos</a></li>
+            <li class="active"><a href="#">Videos</a></li>
             <li><a href="#series">Series</a></li>
             <li><a href="#manga">Manga</a></li>
             <li><a href="#contact">Anime</a></li>
@@ -68,6 +68,7 @@
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
     <script>
         document.body.onload = function () {
 
@@ -89,34 +90,70 @@ function loadSeries(data)
 {
     var json = JSON.parse(data);
 
-    str = json.filter(function(serie) { return serie._episodes.length} )
-              .map(function(serie) { return generateSerieView(serie._serieName, serie._episodes[0]); })
-              .join("");
+    json.filter(function(serie) { return serie._episodes.length} )
+        .forEach(function(serie) {
+            serie._episodes.forEach(function(episode) {
+                var html = generateSerieView (serie._serieName, episode);
+                $("#series").append(html);
 
-    $("#series").append(str);
+            });
+    });
+
+
 
 }
 
+
 function generateSerieView(serieName, episode)
 {
+        var header = '';
+        header += '<div class="header dropdown" style="height:30%">';
+        header += '<a id="dLabel" type="button" style="width: 90%;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >';
+        header += '<h3>' + serieName.capitalize() + '<span class="caret"></span></h3></a>';
+        header += '<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">';
+        header += '</ul>';
+        header += "</div>";
+        header = $(header);
+
+
+        header.click(function() { 
+            var menu = header.find("ul");
+            if(menu.children().length) return;
+
+            callAjax("/serie/" + serieName, function(data) { 
+                menu.append(fillEpisodesDropdown(data)); 
+            });
+        });
+
+        var footer = '';
+        footer += '<div class="footer" style="height:70%;">';
+        footer += '<a href="' + episode._magnetURI + '">';
+        footer += '<p style="margin:0px;">' + episode._name + '</p>';
+        footer += '<p style="margin:0px;">' + episode._date + '</p>';
+        footer += '</a>';
+        footer += '</div>';
+        footer = $(footer);
+
     var str = '';
     str += '<div class="itemSerie">';
-        str += '<div class="header" style="height: 30%;">';
-        str += '<a href="' + "https://www.youtube.com/user/" + serieName + "/videos" + '"><h3 style="margin:0px;">' + serieName.capitalize() + '</h3></a>';
-        str += "</div>";
-
-
-
-
-        str += '<div class="footer" style="height:70%;">';
-        str += '<a href="' + episode._magnetURI + '">';
-        str += '<p style="margin:0px;">' + episode._name + '</p>';
-        str += '<p style="margin:0px;">' + episode._date + '</p>';
-        str += '</a>';
-        str += '</div>';
     str += '</div>';
+    return $(str).append(header).append(footer);
 
-    return str;
+}
+
+function fillEpisodesDropdown(data)
+{
+    var json = JSON.parse(data);
+
+    var episodes =  json.map(function(serie) {
+               return serie._episodes.map(function(episode) {
+                   return '<li><a role="menuitem" href="' + episode._magnetURI + '"><b>' + episode._name + '</b> ' + episode._date + '</a></li>';
+              });
+
+    });
+
+
+    return [].concat.apply([], episodes);
 
 }
 
