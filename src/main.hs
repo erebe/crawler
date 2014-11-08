@@ -18,6 +18,8 @@ import           System.Directory                (getHomeDirectory, doesFileExis
 import           Control.Lens                    hiding ((.=))
 import           Control.Monad.IO.Class          (liftIO)
 import           Web.Scotty
+import           Network.HTTP.Types.Status       (ok200)
+
 import qualified Data.Text as T
 
 import           Data.Aeson
@@ -186,6 +188,7 @@ runRestServer queue = scotty 8086 $ do
             Nothing     -> next
 
     notFound $ do
+        status ok200
         setHeader "Content-type" "text/html; charset=utf-8"
         file "resources/index.html"
 
