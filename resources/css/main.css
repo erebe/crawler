@@ -2,6 +2,15 @@ section {
     clear : left;
 }
 
+h1 {
+    text-transform: capitalize;
+}
+
+.item  h1 {
+    font-weight: 400;
+    font-size: 20px;
+}
+
 /* -------------------------------------
  * VIDEO
  * -------------------------------------
@@ -19,11 +28,6 @@ section {
     color: #BDA3AD;
 }
 
-.videoItem  h1 {
-    font-weight: 300;
-    text-transform: capitalize;
-    font-size: 20px;
-}
 
 .videoItem .header {
     height: 10%;
@@ -47,20 +51,59 @@ section {
 }
 
 
+/* -------------------------------------
+ * Serie
+ * -------------------------------------
+ */
 
-.itemSerie {
-    float  : left;
+.serie-item {
+    display: inline-block;
+    vertical-align: top;
     margin : 10px;
     width  : 300px;
     height : 100px;
 }
 
-
-.itemAnime {
-    float    : left;
-    margin   : 10px;
-    width    : 250px;
-    height   : 350px;
+.serie-item header
+{
+    height: 30%;
 }
 
+.serie-item footer
+{
+    height: 70%;
+}
+
+/* -------------------------------------
+ * Anime
+ * -------------------------------------
+ */
+
+.anime-item {
+    display: inline-block;
+    vertical-align: top;
+    margin   : 10px;
+    width    : 250px;
+    height   : 420px;
+}
+
+.anime-item header {
+    height: 10%;
+    text-align: center;
+}
+
+.anime-item footer {
+    height: 20%;
+    text-align: center;
+}
+
+.anime-item img {
+    height:100%;
+    width: 100%;
+}
+.anime-item .thumbnail {
+    height: 70%;
+    padding: 5px;
+    background-color: #BDA3AD;
+}
 

@@ -64,19 +64,22 @@ jQuery(document).ready(function($) {
 document.body.onload = function () {
 
     callAjax("/video/", function(data) { loadVideos(data, $("#videos")); });
-    callAjax("/serie/", loadSeries);
-    callAjax("/anime/", loadAnimes);
+    callAjax("/serie/", function(data) { loadSeries(data, $("#series")); });
+    callAjax("/anime/", function(data) { loadAnimes(data, $("#animes")); });
 
 };
 
-function loadAnimes(data)
+function loadAnimes(data, container)
 {
     var json = JSON.parse(data);
-    str = json.filter(function(anime) { return anime._episodes.length} )
-              .map(function(anime) { return generateAnimeView(anime, anime._episodes[0]); })
-              .join("");
+    var animes = json.filter(function(anime) { return anime._episodes.length; } )
+                     .map(function(anime) {
+                         return anime._episodes.map(function(episode) {
+                             return generateAnimeView(anime, episode); });
+                     });
 
-    $("#animes").append(str);
+
+    container.append.apply(container, animes);
 }
 
 function loadVideos(data, container)
@@ -93,101 +96,93 @@ function loadVideos(data, container)
 
 }
 
-function loadSeries(data)
+function loadSeries(data, container)
 {
     var json = JSON.parse(data);
+    var series = json.filter(function(serie) { return serie._episodes.length} )
+                     .map(function(serie) {
+                        return serie._episodes.map(function(episode) {
+                            return generateSerieView (serie._serieName, episode);
 
-    json.filter(function(serie) { return serie._episodes.length} )
-        .forEach(function(serie) {
-            serie._episodes.forEach(function(episode) {
-                var html = generateSerieView (serie._serieName, episode);
-                $("#series").append(html);
-
-            });
-    });
+                        });
+                    });
 
 
+    container.append.apply(container, series);
 
 }
 
 function generateAnimeView(anime, episode)
 {
-    var str = '';
-    str += '<div class="itemAnime">';
-        str += '<div class="header" style="height: 10%">';
-        str += '<a><h4 style="margin:0px;">' + anime._title.capitalize() + '</h4></a>';
-        str += "</div>";
+    var container = $("<div class='item anime-item'></div>");
 
-        str += '<div class="thumbnail" style="height:60%; width:60%;">';
-        str += '<a href="' + episode._magnetURI + '">';
-        str += '<img src="' + anime._thumbnail + '" /></a>';
-        str += '</div>';
+    var header = $('<header>' +
+                       '<a href=""><h1>' + anime._title + '</h1></a>' +
+                   '</header>'
+                  );
+
+    var thumbnail = $('<div class="thumbnail">' +
+                        '<a href="' + episode._magnetURI + '">' +
+                        '<img src="' + anime._thumbnail + '" /></a>' +
+                      '</div>'
+                     );
+
+    var date = new Date(episode._date * 1000);
+    var footer = $('<footer>' +
+                     '<a href="' + episode._magnetURI + '">' +
+                         '<h3>' + episode._name + '</h3>' +
+                         '<h3>' + date.toLocaleDateString() + '</h3>' +
+                     '</a>' +
+                   '</footer>');
+
+    header.click(function(event) {
+        event.preventDefault();
+        $(".cd-panel-header-title").html(anime._title);
+        callAjax("/anime/" + anime._title, function(data) {
+            var panel = $(".cd-panel-content");
+            panel.empty();
+            loadAnimes(data, panel);
+            panel.animate({ scrollTop: 0 }, 0);
+            $('.cd-panel').addClass('is-visible');
+        });
+    });
 
 
-        str += '<div class="footer" style="height:30%;">';
-        str += '<a href="' + episode._magnetURI + '">';
-        str += '<p style="margin:0px;"><b>' + episode._name + '</b></p>';
-        str += '<p style="margin:0px;">' + new Date(episode._date * 1000) + '</p>';
-        str += '</a>';
-        str += '</div>';
-    str += '</div>';
-
-    return str;
+    return container.append.apply(container, [header, thumbnail, footer]);
 }
 
 function generateSerieView(serieName, episode)
 {
-        var header = '';
-        header += '<div class="header dropdown" style="height:30%">';
-        header += '<a id="dLabel" type="button" style="width: 90%;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >';
-        header += '<h3>' + serieName.capitalize() + '<span class="caret"></span></h3></a>';
-        header += '<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">';
-        header += '</ul>';
-        header += "</div>";
-        header = $(header);
+    var container = $("<div class='item serie-item'></div>");
+    var header = $('<header>' +
+                   '<a href=""><h1>' + serieName + '</h1></a>' +
+                   '</header>');
+
+    var footer = $('<footer class="footer">' +
+                        '<a href="' + episode._magnetURI + '">' +
+                            '<h3>' + episode._name + '</h3>' +
+                            '<h3>' + episode._date + '</h3>' +
+                        '</a>' +
+                    '</footer>'
+                   );
 
 
-        header.click(function() {
-            var menu = header.find("ul");
-            if(menu.children().length) return;
-
-            callAjax("/serie/" + serieName, function(data) {
-                menu.append(fillEpisodesDropdown(data));
-            });
+    header.click(function(event) {
+        event.preventDefault();
+        $(".cd-panel-header-title").html(serieName);
+        callAjax("/serie/" + serieName, function(data) {
+            var panel = $(".cd-panel-content");
+            panel.empty();
+            loadSeries(data, panel);
+            panel.animate({ scrollTop: 0 }, 0);
+            $('.cd-panel').addClass('is-visible');
         });
-
-        var footer = '';
-        footer += '<div class="footer" style="height:70%;">';
-        footer += '<a href="' + episode._magnetURI + '">';
-        footer += '<p style="margin:0px;">' + episode._name + '</p>';
-        footer += '<p style="margin:0px;">' + episode._date + '</p>';
-        footer += '</a>';
-        footer += '</div>';
-        footer = $(footer);
-
-    var str = '';
-    str += '<div class="itemSerie">';
-    str += '</div>';
-    return $(str).append(header).append(footer);
-
-}
-
-function fillEpisodesDropdown(data)
-{
-    var json = JSON.parse(data);
-
-    var episodes =  json.map(function(serie) {
-               return serie._episodes.map(function(episode) {
-                   return '<li><a role="menuitem" href="' + episode._magnetURI + '"><b>' + episode._name + '</b> ' + episode._date + '</a></li>';
-              });
-
     });
 
 
-    return [].concat.apply([], episodes);
+    return container.append.apply(container, [header, footer]);
 
 }
-
 
 function generateVideoView(channelName, video)
 {
@@ -222,8 +217,6 @@ function generateVideoView(channelName, video)
             panel.animate({ scrollTop: 0 }, 0);
             $('.cd-panel').addClass('is-visible');
         });
-
-
     });
 
 
@@ -231,15 +224,9 @@ function generateVideoView(channelName, video)
 }
 
 
-String.prototype.capitalize = function() {
-    return this.charAt(0).toUpperCase() + this.slice(1);
-}
-
 function callAjax(url, callback)
 {
-    var xmlhttp;
-    // compatible with IE7+, Firefox, Chrome, Opera, Safari
-    xmlhttp = new XMLHttpRequest();
+    var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function(){
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
             callback(xmlhttp.responseText);
