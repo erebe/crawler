@@ -48,7 +48,7 @@ getConfig :: Configuration -> String -> [String]
 getConfig (Configuration cfg) name = fromMaybe [] $ lookup name cfg
 
 
-data Service = Video | Meteo | Serie | SMS | Anime | Unknown 
+data Service = Video | Meteo | Serie | SMS | Anime | Unknown
                deriving (Eq)
 
 data ServiceData = VideoData [Youtube.Channel]
@@ -194,6 +194,13 @@ runRestServer queue = scotty 8086 $ do
                            result
 
             Nothing     -> next
+
+    get "/assets/:folder/:file" $ do
+        --TODO check inputs
+        folderName   <- param "folder" :: ActionM String
+        fileName   <- param "file" :: ActionM String
+        file ("resources/" ++ folderName ++ "/" ++ fileName)
+
 
     notFound $ do
         status ok200
