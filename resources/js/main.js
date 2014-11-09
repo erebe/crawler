@@ -1,4 +1,4 @@
-jQuery(document).ready(function($){
+jQuery(document).ready(function($) {
     var contentSections = $('.cd-section'),
         navigationItems = $('#cd-vertical-nav a');
 
@@ -7,6 +7,18 @@ jQuery(document).ready(function($){
         updateNavigation();
     });
 
+    //open the lateral panel
+    $('.cd-btn').on('click', function(event){
+        event.preventDefault();
+        $('.cd-panel').addClass('is-visible');
+    });
+    //clode the lateral panel
+    $('.cd-panel').on('click', function(event){
+        if( $(event.target).is('.cd-panel') || $(event.target).is('.cd-panel-close') ) {
+            $('.cd-panel').removeClass('is-visible');
+            event.preventDefault();
+        }
+    });
     //smooth scroll to the section
     navigationItems.on('click', function(event){
         event.preventDefault();
@@ -51,9 +63,9 @@ jQuery(document).ready(function($){
 
 document.body.onload = function () {
 
-        callAjax("/video/", loadVideos);
-        callAjax("/serie/", loadSeries);
-        callAjax("/anime/", loadAnimes);
+    callAjax("/video/", function(data) { loadVideos(data, $("#videos")); });
+    callAjax("/serie/", loadSeries);
+    callAjax("/anime/", loadAnimes);
 
 };
 
@@ -67,14 +79,18 @@ function loadAnimes(data)
     $("#animes").append(str);
 }
 
-function loadVideos(data)
+function loadVideos(data, container)
 {
     var json = JSON.parse(data);
-    str = json.filter(function(channel) { return channel._videos.length} )
-              .map(function(channel) { return generateVideoView(channel._name, channel._videos[0]); })
-              .join("");
+    var videos = json.filter(function(channel) { return channel._videos.length; } )
+                     .map(function(channel) {
+                         return channel._videos.map(function(video) {
+                             return generateVideoView(channel._name, video); });
+                     });
 
-   $("#videos").append(str);
+
+    container.append.apply(container, videos);
+
 }
 
 function loadSeries(data)
@@ -175,24 +191,43 @@ function fillEpisodesDropdown(data)
 
 function generateVideoView(channelName, video)
 {
-    var str = '';
-    str += '<div class="item videoItem">';
-        str += '<div class="header">';
-        str += '<a href="' + "https://www.youtube.com/user/" + channelName + "/videos" + '"><h1>' + channelName + '</h1></a>';
-        str += "</div>";
+    var container = $('<div class="item videoItem"></div>');
+    var header = $('<div class="header">' +
+                    '<a href="">' +
+                        '<h1>' + channelName + '</h1>' +
+                    '</a>' +
+                    '</div>'
+                  );
 
-        str += '<div class="thumbnail">';
-        str += '<a href="' + video._url + '">';
-        str += '<img src="' + video._thumbnail + '"/></a>';
-        str += '</div>';
+    var thumbnail = $('<div class="thumbnail">' +
+                       '<a href="' + video._url + '">' +
+                           '<img src="' + video._thumbnail + '"/>' +
+                       '</a>' +
+                     '</div>'
+                    );
+
+    var footer = $('<div class="footer">' +
+                     '<a href="' + video._url + '">' +  video._titre + '</a>' +
+                   '</div>'
+                 );
 
 
-        str += '<div class="footer">';
-        str += '<a href="' + video._url + '">' +  video._titre + '</a>';
-        str += '</div>';
-    str += '</div>';
+    header.click(function(event) {
+        event.preventDefault();
+        $(".cd-panel-header-title").html(channelName);
+        callAjax("/video/" + channelName, function(data) {
+            var panel = $(".cd-panel-content");
+            panel.empty();
+            loadVideos(data, panel);
+            panel.animate({ scrollTop: 0 }, 0);
+            $('.cd-panel').addClass('is-visible');
+        });
 
-    return str;
+
+    });
+
+
+    return container.append.apply(container, [header, thumbnail, footer]);
 }
 
 
