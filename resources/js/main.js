@@ -158,10 +158,11 @@ function generateSerieView(serieName, episode)
                    '<a href=""><h1>' + serieName + '</h1></a>' +
                    '</header>');
 
+    var date = new Date(episode._date * 1000);
     var footer = $('<footer class="footer">' +
                         '<a href="' + episode._magnetURI + '">' +
                             '<h3>' + episode._name + '</h3>' +
-                            '<h3>' + episode._date + '</h3>' +
+                            '<h3>' + date.toLocaleDateString() + '</h3>' +
                         '</a>' +
                     '</footer>'
                    );

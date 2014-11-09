@@ -14,6 +14,8 @@ import           Control.Applicative
 import           Control.Monad
 import           Data.Maybe
 
+import           Data.UnixTime
+
 import           Control.Lens
 import           GHC.Generics
 
@@ -41,7 +43,7 @@ $(makeLenses ''Serie)
 extractData :: BL.ByteString -> [Episode]
 extractData xmlStr = (\el ->  name      .~ (T.decodeUtf8 . BC.pack $ extractString (findElemByName "title" el))
                             $ link      .~ extractString (findElemByName "link" el)
-                            $ date      .~ extractString (findElemByName "pubDate" el)
+                            $ date      .~ (show . utSeconds $ parseUnixTime webDateFormat (BC.pack $ extractString (findElemByName "pubDate" el)))
                             $ magnetURI .~ extractString (findElem "magnetURI" "http://xmlns.ezrss.it/0.1/" el)
                             $ fileName  .~ extractString (findElem "fileName" "http://xmlns.ezrss.it/0.1/" el)
                             $ Episode "" "" "" "" ""

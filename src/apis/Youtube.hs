@@ -16,8 +16,9 @@ import           Data.Maybe
 import           Control.Lens
 import           GHC.Generics
 
+import           Data.UnixTime
+
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
 
 import Data.Aeson
 import Data.Aeson.Types
@@ -26,6 +27,7 @@ import Control.Monad(forM, join)
 data Video = Video { _titre     :: T.Text
                     ,_url       :: String
                     ,_thumbnail :: String
+                    ,_date      :: String
 
                    } deriving (Show, Read, Generic)
 
@@ -45,14 +47,6 @@ getChannelURL str = "https://gdata.youtube.com/feeds/api/users/" ++ str ++ "/upl
 
 
 
-toVideo :: String -> String -> Video
-toVideo a b = Video T.empty "" ""
-              & titre     .~ (T.decodeUtf8 . BC.pack $ b)
-              & url       .~ "http://www.youtube.com/watch?v=" ++ a
-              & thumbnail .~ "http://i1.ytimg.com/vi/" ++ a ++ "/mqdefault.jpg"
-
-
-
 decodeAPI :: BL.ByteString -> Maybe [Video]
 decodeAPI string = do
     result <- decode string
@@ -64,8 +58,11 @@ decodeAPI string = do
                         Video <$> item .: "title"
                               <*> (format <$> (item .: "id"))
                               <*> (item .: "thumbnail" >>= (.: "hqDefault"))
+                              <*> (toSeconds <$> (item .: "updated"))
 
-    where format vidID = "https://www.youtube.com/v/" ++ vidID ++ "?vq=hd720"
+    where 
+        format vidID = "https://www.youtube.com/v/" ++ vidID ++ "?vq=hd720"
+        toSeconds timeStr =  show . utSeconds $ parseUnixTime (BC.pack "%FT%X") (BC.pack timeStr)
 
 fetchChannels :: [String] -> IO [Channel]
 fetchChannels channelsName = do
