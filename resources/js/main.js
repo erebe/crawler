@@ -66,8 +66,21 @@ document.body.onload = function () {
     callAjax("/video/", function(data) { loadVideos(data, $("#videos")); });
     callAjax("/serie/", function(data) { loadSeries(data, $("#series")); });
     callAjax("/anime/", function(data) { loadAnimes(data, $("#animes")); });
+    callAjax("/meteo/", function(data) { loadWeather(data, $("#weathers")); });
 
 };
+
+function loadWeather(data, container)
+{
+    var json = JSON.parse(data);
+    var weathers = json.filter(function(city) { return city.forecasts.length; } )
+                     .map(function(city) {
+                         return city.forecasts.map(function(forecast) {
+                             return generateWeatherView(city.city, forecast); });
+                     });
+
+    container.append.apply(container, weathers);
+}
 
 function loadAnimes(data, container)
 {
@@ -112,6 +125,37 @@ function loadSeries(data, container)
 
     container.append.apply(container, series);
 
+}
+
+function generateWeatherView(cityName, forecast) {
+
+    var container = $('<div class="item weather-item"></div>');
+    var header = $('<header><h1>' + cityName + '</h1></header>')
+
+    var thumbnail = $('<div class="thumbnail">' +
+                        '<img src="' + forecast.iconUrl + '"/>' +
+                      '</div>'
+                     );
+
+     var footer = $('<footer>' + 
+                        '<h3>' + forecast.temperature + 'C°  ' + forecast.description + '</h3>' +
+                        '<a>' + forecast.date + '</a>' +
+                    '</footer>');
+
+
+    header.click(function(event) {
+        event.preventDefault();
+        $(".cd-panel-header-title").html(cityName);
+        callAjax("/meteo/" + cityName, function(data) {
+            var panel = $(".cd-panel-content");
+            panel.empty();
+            loadWeather(data, panel);
+            panel.animate({ scrollTop: 0 }, 0);
+            $('.cd-panel').addClass('is-visible');
+        });
+    });
+
+    return container.append.apply(container, [header, thumbnail, footer]);
 }
 
 function generateAnimeView(anime, episode)

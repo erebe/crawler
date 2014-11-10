@@ -107,3 +107,35 @@ h1 {
     background-color: #BDA3AD;
 }
 
+
+/* -------------------------------------
+ * Anime
+ * -------------------------------------
+ */
+
+.weather-item {
+    display: inline-block;
+    vertical-align: top;
+    margin   : 10px;
+    width    : 250px;
+    height   : 150px;
+    text-align: center;
+}
+
+.weather-item .thumbnail {
+    height: 50%;
+    width: 30%;
+    padding: 5px;
+    background-color: #BDA3AD;
+    margin: auto;
+}
+
+.weather-item footer {
+    height: 20%;
+    text-align: center;
+}
+
+.weather-item img {
+    height:100%;
+    width: 100%;
+}
