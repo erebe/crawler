@@ -4,9 +4,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Haruhichan ( Episode()
-                  , name, magnetURI, date
+                  , title, magnetURI, date
                   , Anime()
-                  , title, thumbnail, episodes
+                  , name, thumbnail, episodes
                   , fetchAnimes
                   ) where
 
@@ -28,14 +28,14 @@ import Data.Aeson.Types
 import Control.Monad(forM, join)
 
 
-data Episode = Episode { _name :: T.Text
+data Episode = Episode { _title :: T.Text
                         ,_magnetURI :: String
                         ,_date :: String
 
                        } deriving (Show, Read, Generic)
 
 
-data Anime = Anime { _title      :: String
+data Anime = Anime { _name      :: String
                     , _thumbnail :: String
                     , _episodes  :: [Episode]
 

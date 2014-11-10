@@ -3,9 +3,9 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module Eztv ( Serie()
-            , serieName, episodes
+            , name, episodes
             , Episode()
-            , name, magnetURI, date, link, fileName
+            , title, magnetURI, date, link, fileName
             , fetchSeries
             ) where
 
@@ -27,18 +27,18 @@ import           GHC.Generics
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 
-data Episode = Episode { _name      :: T.Text
+data Episode = Episode { _title      :: T.Text
                         ,_magnetURI :: String
                         ,_date      :: String
                         ,_link      :: String
                         ,_fileName  :: String
 
-                        } deriving (Show,Read, Generic)
+                        } deriving (Show, Generic)
 
-data Serie = Serie { _serieName :: String
+data Serie = Serie { _name :: String
                     ,_episodes  :: [Episode]
 
-                   } deriving (Show, Read, Generic)
+                   } deriving (Show, Generic)
 
 $(makeLenses ''Episode)
 $(makeLenses ''Serie)
@@ -46,7 +46,7 @@ $(makeLenses ''Serie)
 
 
 extractData :: BL.ByteString -> [Episode]
-extractData xmlStr = (\el ->  name      .~ (T.decodeUtf8 . BC.pack $ extractString (findElemByName "title" el))
+extractData xmlStr = (\el ->  title      .~ (T.decodeUtf8 . BC.pack $ extractString (findElemByName "title" el))
                             $ link      .~ extractString (findElemByName "link" el)
                             $ date      .~ (show . utSeconds $ parseUnixTime webDateFormat (BC.pack $ extractString (findElemByName "pubDate" el)))
                             $ magnetURI .~ extractString (findElem "magnetURI" "http://xmlns.ezrss.it/0.1/" el)
@@ -77,7 +77,7 @@ craftEzrssUrl nameS = protocol ++ baseUrl ++ buildArgs
 fetchSeries :: [String] -> IO [Serie]
 fetchSeries seriesNames = do
     episodes' <- getPages extractData (craftEzrssUrl <$> seriesNames)
-    let series = (\(nameS, eps) -> serieName .~ nameS
+    let series = (\(nameS, eps) -> name .~ nameS
                                  $ episodes .~ fromMaybe [] eps
                                  $ Serie "" []
                  )

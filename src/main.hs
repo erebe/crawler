@@ -90,10 +90,10 @@ class ServiceAction a where
     dispatch :: String -> a -> Maybe (ActionM ())
 
 instance ServiceAction ServiceData where
-    listA (SerieData series)   = Just $ raw . encodePretty $ series^..traverse.Serie.serieName
+    listA (SerieData series)   = Just $ raw . encodePretty $ series^..traverse.Serie.name
     listA (VideoData channels) = Just $ raw . encodePretty $ channels^..traverse.Video.name
     listA (MeteoData cities)   = Just $ raw . encodePretty $ Weather.city <$> cities
-    listA (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traverse.Anime.title
+    listA (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traverse.Anime.name
     listA _                    = Nothing
 
     lastA (SerieData series)   = Just $ raw . encodePretty $ [serie & Serie.episodes .~ take 1 (serie^.Serie.episodes) | serie <- series]
@@ -103,9 +103,9 @@ instance ServiceAction ServiceData where
     lastA _                    = Nothing
 
 
-    findA toFind (SerieData series)   = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Serie.serieName))
+    findA toFind (SerieData series)   = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Serie.name))
     findA toFind (VideoData channels) = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Video.name))
-    findA toFind (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traversed.filtered (\anime -> toFind `isInfixOf` (anime^.Anime.title))
+    findA toFind (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traversed.filtered (\anime -> toFind `isInfixOf` (anime^.Anime.name))
     findA toFind (MeteoData cities)   = Just $ raw . encodePretty $ [ city | city <- cities, T.toLower (T.pack toFind)
                                                                                              `T.isInfixOf`
                                                                                              T.toLower (Weather.city city)]

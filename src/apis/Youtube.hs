@@ -6,7 +6,7 @@
 module Youtube ( Video()
                , videos, name
                , Channel()
-               , titre, url, thumbnail, date
+               , title, url, thumbnail, date
                , fetchChannels
                ) where
 
@@ -29,7 +29,7 @@ import Data.Aeson
 import Data.Aeson.Types
 import Control.Monad(forM, join)
 
-data Video = Video { _titre     :: T.Text
+data Video = Video { _title     :: T.Text
                     ,_url       :: String
                     ,_thumbnail :: String
                     ,_date      :: String
