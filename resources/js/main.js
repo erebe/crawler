@@ -104,7 +104,7 @@ function loadSeries(data, container)
                      .sort(function(a,b) { return a._episodes[0]._date < b._episodes[0]._date;} )
                      .map(function(serie) {
                         return serie._episodes.map(function(episode) {
-                            return generateSerieView (serie._serieName, episode);
+                            return generateSerieView (serie._name, episode);
 
                         });
                     });
@@ -119,7 +119,7 @@ function generateAnimeView(anime, episode)
     var container = $("<div class='item anime-item'></div>");
 
     var header = $('<header>' +
-                       '<a href=""><h1>' + anime._title + '</h1></a>' +
+                       '<a href=""><h1>' + anime._name + '</h1></a>' +
                    '</header>'
                   );
 
@@ -132,15 +132,15 @@ function generateAnimeView(anime, episode)
     var date = new Date(episode._date * 1000);
     var footer = $('<footer>' +
                      '<a href="' + episode._magnetURI + '">' +
-                         '<h3>' + episode._name + '</h3>' +
+                         '<h3>' + episode._title + '</h3>' +
                          '<h3>' + date.toLocaleDateString() + '</h3>' +
                      '</a>' +
                    '</footer>');
 
     header.click(function(event) {
         event.preventDefault();
-        $(".cd-panel-header-title").html(anime._title);
-        callAjax("/anime/" + anime._title, function(data) {
+        $(".cd-panel-header-title").html(anime._name);
+        callAjax("/anime/" + anime._name, function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadAnimes(data, panel);
@@ -163,7 +163,7 @@ function generateSerieView(serieName, episode)
     var date = new Date(episode._date * 1000);
     var footer = $('<footer class="footer">' +
                         '<a href="' + episode._magnetURI + '">' +
-                            '<h3>' + episode._name + '</h3>' +
+                            '<h3>' + episode._title + '</h3>' +
                             '<h3>' + date.toLocaleDateString() + '</h3>' +
                         '</a>' +
                     '</footer>'
@@ -205,7 +205,7 @@ function generateVideoView(channelName, video)
                     );
 
     var footer = $('<div class="footer">' +
-                     '<a href="' + video._url + '">' +  video._titre + '</a>' +
+                     '<a href="' + video._url + '">' +  video._title + '</a>' +
                    '</div>'
                  );
 
