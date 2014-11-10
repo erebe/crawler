@@ -1,10 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Http where
+module Http (getPages) where
 
 
--- import           Data.Maybe
 import           Network.HTTP.Conduit
 
 import           Control.Monad.IO.Class(MonadIO, liftIO)

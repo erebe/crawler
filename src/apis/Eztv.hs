@@ -2,7 +2,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Eztv where
+module Eztv ( Serie()
+            , serieName, episodes
+            , Episode()
+            , name, magnetURI, date, link, fileName
+            , fetchSeries
+            ) where
 
 import           Http(getPages)
 

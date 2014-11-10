@@ -3,10 +3,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
 
-import qualified Eztv
-import qualified Youtube
-import qualified Weather
-import qualified Anime
+import qualified Eztv as Serie
+import qualified Youtube as Video
+import qualified OpenWeather as Weather
+import qualified Haruhichan as Anime
 
 import           Control.Applicative             ((<$>), (<*>))
 import           Control.Concurrent.Async        (async, wait)
@@ -35,10 +35,10 @@ import           Control.Monad.Trans.Maybe(MaybeT, runMaybeT)
 
 instance ToJSON Weather.Forecast
 instance ToJSON Weather.Weather
-instance ToJSON Eztv.Episode
-instance ToJSON Eztv.Serie
-instance ToJSON Youtube.Video
-instance ToJSON Youtube.Channel
+instance ToJSON Serie.Episode
+instance ToJSON Serie.Serie
+instance ToJSON Video.Video
+instance ToJSON Video.Channel
 instance ToJSON Anime.Episode
 instance ToJSON Anime.Anime
 
@@ -51,18 +51,18 @@ getConfig (Configuration cfg) name = fromMaybe [] $ lookup name cfg
 data Service = Video | Meteo | Serie | SMS | Anime | Unknown
                deriving (Eq)
 
-data ServiceData = VideoData [Youtube.Channel]
+data ServiceData = VideoData [Video.Channel]
                  | MeteoData [Weather.Weather]
-                 | SerieData [Eztv.Serie]
+                 | SerieData [Serie.Serie]
                  | AnimeData [Anime.Anime]
                  | SMSData [Int]
                  | None
 
 servicesMap :: [(Service, (String, [String] -> IO ServiceData))]
-servicesMap =  [ (Video,  ("video", \args -> VideoData <$> Youtube.fetchChannels args))
+servicesMap =  [ (Video,  ("video", \args -> VideoData <$> Video.fetchChannels args))
                , (Meteo,  ("meteo", \args -> MeteoData <$> Weather.fetchWeathers args))
-               , (Serie,  ("serie", \args -> SerieData <$> Eztv.fetchSeries args))
-               , (Anime,  ("anime", \args -> AnimeData <$> Anime.fetchAnime args))
+               , (Serie,  ("serie", \args -> SerieData <$> Serie.fetchSeries args))
+               , (Anime,  ("anime", \args -> AnimeData <$> Anime.fetchAnimes args))
                , (SMS,    ("sms",   \_ -> return None))
                ]
 
@@ -90,21 +90,21 @@ class ServiceAction a where
     dispatch :: String -> a -> Maybe (ActionM ())
 
 instance ServiceAction ServiceData where
-    listA (SerieData series)   = Just $ raw . encodePretty $ series^..traverse.Eztv.serieName
-    listA (VideoData channels) = Just $ raw . encodePretty $ channels^..traverse.Youtube.name
+    listA (SerieData series)   = Just $ raw . encodePretty $ series^..traverse.Serie.serieName
+    listA (VideoData channels) = Just $ raw . encodePretty $ channels^..traverse.Video.name
     listA (MeteoData cities)   = Just $ raw . encodePretty $ Weather.city <$> cities
     listA (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traverse.Anime.title
     listA _                    = Nothing
 
-    lastA (SerieData series)   = Just $ raw . encodePretty $ [serie & Eztv.episodes .~ take 1 (serie^.Eztv.episodes) | serie <- series]
-    lastA (VideoData channels) = Just $ raw . encodePretty $ [channel & Youtube.videos .~ take 1 (channel^.Youtube.videos) | channel <- channels]
+    lastA (SerieData series)   = Just $ raw . encodePretty $ [serie & Serie.episodes .~ take 1 (serie^.Serie.episodes) | serie <- series]
+    lastA (VideoData channels) = Just $ raw . encodePretty $ [channel & Video.videos .~ take 1 (channel^.Video.videos) | channel <- channels]
     lastA (MeteoData cities)   = Just $ raw . encodePretty $ [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- cities]
     lastA (AnimeData animes)   = Just $ raw . encodePretty $ [ anime & Anime.episodes .~ take 1 (anime^.Anime.episodes)| anime <- animes]
     lastA _                    = Nothing
 
 
-    findA toFind (SerieData series)   = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Eztv.serieName))
-    findA toFind (VideoData channels) = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Youtube.name))
+    findA toFind (SerieData series)   = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Serie.serieName))
+    findA toFind (VideoData channels) = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Video.name))
     findA toFind (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traversed.filtered (\anime -> toFind `isInfixOf` (anime^.Anime.title))
     findA toFind (MeteoData cities)   = Just $ raw . encodePretty $ [ city | city <- cities, T.toLower (T.pack toFind)
                                                                                              `T.isInfixOf`
@@ -176,7 +176,7 @@ spawnFetcher = do
                     putStrLn . ("Done fetching :: " ++ ) . show =<< getLocalTime
                     putStrLn "---------------------------------------------------"
 
-                    delay (1000000 * 60 * 60 * 2)
+                    delay (1000000 * 60 * 60) -- Every hour
 
 
 runRestServer ::  MVar [(Service, ServiceData)] -> IO ()

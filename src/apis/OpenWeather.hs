@@ -2,7 +2,11 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Weather where
+
+module OpenWeather ( Forecast(Forecast, date, temperature, description, iconUrl)
+                   , Weather(Weather, city, forecasts)
+                   , fetchWeathers
+                   ) where
 
 import           Control.Applicative
 
@@ -21,17 +25,15 @@ import Data.UnixTime
 import Data.Int
 import Foreign.C.Types
 
-data Forecast = Forecast {
-      date :: T.Text
-    , temperature :: !Double
-    , description :: T.Text
-    , iconUrl :: T.Text
-} deriving (Show, Generic)
+data Forecast = Forecast { date :: T.Text
+                         , temperature :: !Double
+                         , description :: T.Text
+                         , iconUrl :: T.Text
+                         } deriving (Show, Generic)
 
-data Weather = Weather {
-      city :: T.Text
-    , forecasts :: [Forecast]
-}  deriving (Show, Generic)
+data Weather = Weather { city :: T.Text
+                       , forecasts :: [Forecast]
+                       }  deriving (Show, Generic)
 
 
 mkForecast :: Int64 -> Double -> T.Text -> T.Text -> Forecast

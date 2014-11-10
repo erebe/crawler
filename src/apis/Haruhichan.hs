@@ -3,7 +3,12 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Anime where
+module Haruhichan ( Episode()
+                  , name, magnetURI, date
+                  , Anime()
+                  , title, thumbnail, episodes
+                  , fetchAnimes
+                  ) where
 
 
 import           Http(getPages)
@@ -65,8 +70,8 @@ decodeAPI js = do
 
 
 
-fetchAnime :: [String] -> IO [Anime]
-fetchAnime animeIds = do
+fetchAnimes :: [String] -> IO [Anime]
+fetchAnimes animeIds = do
     animes <- getPages decodeAPI (getAnimeURL <$> animeIds)
 
     return $ catMaybes (join <$> animes)

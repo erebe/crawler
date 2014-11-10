@@ -3,7 +3,12 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Youtube where
+module Youtube ( Video()
+               , videos, name
+               , Channel()
+               , titre, url, thumbnail, date
+               , fetchChannels
+               ) where
 
 import           Http(getPages)
 
@@ -60,7 +65,7 @@ decodeAPI string = do
                               <*> (item .: "thumbnail" >>= (.: "hqDefault"))
                               <*> (toSeconds <$> (item .: "updated"))
 
-    where 
+    where
         format vidID = "https://www.youtube.com/v/" ++ vidID ++ "?vq=hd720"
         toSeconds timeStr =  show . utSeconds $ parseUnixTime (BC.pack "%FT%X") (BC.pack timeStr)
 
