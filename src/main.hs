@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
 
+import qualified Reddit
 import qualified Eztv as Serie
 import qualified Youtube as Video
 import qualified OpenWeather as Weather
@@ -41,6 +42,8 @@ instance ToJSON Video.Video
 instance ToJSON Video.Channel
 instance ToJSON Anime.Episode
 instance ToJSON Anime.Anime
+instance ToJSON Reddit.Topic
+instance ToJSON Reddit.Reddit
 
 newtype Configuration = Configuration [(String, [String])]
 
@@ -48,13 +51,14 @@ getConfig :: Configuration -> String -> [String]
 getConfig (Configuration cfg) name = fromMaybe [] $ lookup name cfg
 
 
-data Service = Video | Meteo | Serie | SMS | Anime | Unknown
+data Service = Video | Meteo | Serie | SMS | Anime |  Reddit | Unknown
                deriving (Eq)
 
 data ServiceData = VideoData [Video.Channel]
                  | MeteoData [Weather.Weather]
                  | SerieData [Serie.Serie]
                  | AnimeData [Anime.Anime]
+                 | RedditData [Reddit.Reddit]
                  | SMSData [Int]
                  | None
 
@@ -63,6 +67,7 @@ servicesMap =  [ (Video,  ("video", \args -> VideoData <$> Video.fetchChannels a
                , (Meteo,  ("meteo", \args -> MeteoData <$> Weather.fetchWeathers args))
                , (Serie,  ("serie", \args -> SerieData <$> Serie.fetchSeries args))
                , (Anime,  ("anime", \args -> AnimeData <$> Anime.fetchAnimes args))
+               , (Reddit, ("reddit",\args -> RedditData <$> Reddit.fetchSubReddit args))
                , (SMS,    ("sms",   \_ -> return None))
                ]
 
@@ -94,18 +99,21 @@ instance ServiceAction ServiceData where
     listA (VideoData channels) = Just $ raw . encodePretty $ channels^..traverse.Video.name
     listA (MeteoData cities)   = Just $ raw . encodePretty $ Weather.city <$> cities
     listA (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traverse.Anime.name
+    listA (RedditData reddits) = Just $ raw . encodePretty $ reddits^..traverse.Reddit.name
     listA _                    = Nothing
 
     lastA (SerieData series)   = Just $ raw . encodePretty $ [serie & Serie.episodes .~ take 1 (serie^.Serie.episodes) | serie <- series]
     lastA (VideoData channels) = Just $ raw . encodePretty $ [channel & Video.videos .~ take 1 (channel^.Video.videos) | channel <- channels]
     lastA (MeteoData cities)   = Just $ raw . encodePretty $ [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- cities]
     lastA (AnimeData animes)   = Just $ raw . encodePretty $ [ anime & Anime.episodes .~ take 1 (anime^.Anime.episodes)| anime <- animes]
+    lastA (RedditData reddits) = Just $ raw . encodePretty $ [ reddit & Reddit.topics .~ take 25 (reddit^.Reddit.topics)| reddit <- reddits]
     lastA _                    = Nothing
 
 
     findA toFind (SerieData series)   = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Serie.name))
     findA toFind (VideoData channels) = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Video.name))
     findA toFind (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traversed.filtered (\anime -> toFind `isInfixOf` (anime^.Anime.name))
+    findA toFind (RedditData reddits) = Just $ raw . encodePretty $ reddits^..traversed.filtered (\reddit -> toFind `isInfixOf` (reddit^.Reddit.name))
     findA toFind (MeteoData cities)   = Just $ raw . encodePretty $ [ city | city <- cities, T.toLower (T.pack toFind)
                                                                                              `T.isInfixOf`
                                                                                              T.toLower (Weather.city city)]
@@ -152,7 +160,7 @@ spawnFetcher = do
         where
             waitForOneMin = let micro = (6 :: Int) in timeout (10^micro * 60 * 10)
             getLocalTime = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
-            services = [Video, Serie, Meteo, Anime]
+            services = [Video, Serie, Meteo, Anime, Reddit]
 
             fetcher queue = forever $ do
                     config   <- loadConfigFile

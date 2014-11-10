@@ -67,8 +67,23 @@ document.body.onload = function () {
     callAjax("/serie/", function(data) { loadSeries(data, $("#series")); });
     callAjax("/anime/", function(data) { loadAnimes(data, $("#animes")); });
     callAjax("/meteo/", function(data) { loadWeather(data, $("#weathers")); });
+    callAjax("/reddit/", function(data) { loadReddit(data, $("#reddits")); });
 
 };
+
+function loadReddit(data, container)
+{
+    var json = JSON.parse(data);
+    var subs = json.filter(function(sub) { return sub._topics.length; } )
+                   .map(function(sub) {
+                        var table = $("<table class='item reddit-item'><thead><tr><th><h1>"+ sub._name +"</h1></th></tr></thead></table>");
+                        return table.append.apply( table, sub._topics.map(function(topic) {
+                            return generateRedditView(sub._name, topic); }));
+                     });
+
+    container.append.apply(container, subs);
+
+}
 
 function loadWeather(data, container)
 {
@@ -127,6 +142,16 @@ function loadSeries(data, container)
 
 }
 
+
+function generateRedditView(subName, topic)
+{
+    var generateThumbnail = function(url) { 
+        return (url.length && url != "self") ?  '<img style="vertical-align: middle;" src="' + url  + '"/>' : ""; 
+    }
+
+    return $('<tr><th><span>⇒ </span>'+ generateThumbnail(topic._thumbnail) + '<a href="' + topic._url + '"><b>'+ topic._title + '</b></a></th></tr>');
+}
+
 function generateWeatherView(cityName, forecast) {
 
     var container = $('<div class="item weather-item"></div>');
@@ -137,7 +162,7 @@ function generateWeatherView(cityName, forecast) {
                       '</div>'
                      );
 
-     var footer = $('<footer>' + 
+     var footer = $('<footer>' +
                         '<h3>' + forecast.temperature + 'C°  ' + forecast.description + '</h3>' +
                         '<a>' + forecast.date + '</a>' +
                     '</footer>');

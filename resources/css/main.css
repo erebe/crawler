@@ -2,7 +2,7 @@ section {
     clear : left;
 }
 
-h1 {
+thead, h1 {
     text-transform: capitalize;
 }
 
@@ -138,4 +138,25 @@ h1 {
 .weather-item img {
     height:100%;
     width: 100%;
+}
+
+
+/* -------------------------------------
+ * Reddit
+ * -------------------------------------
+ */
+.reddit-item {
+    display: inline-block;
+    vertical-align: top;
+    margin   : 20px;
+    width    : 45%;
+    text-align: left;
+}
+
+ th {
+    margin-top : 20px;
+}
+
+b {
+    font-weight: bold;
 }
