@@ -145,11 +145,22 @@ function loadSeries(data, container)
 
 function generateRedditView(subName, topic)
 {
-    var generateThumbnail = function(url) { 
-        return (url.length && url != "self") ?  '<img style="vertical-align: middle;" src="' + url  + '"/>' : ""; 
+    var generateThumbnail = function(topic) { 
+        var url = topic._thumbnail;
+        return (url.length && url != "self") ?  
+            '<a href="'+ topic._url + '"><img style="vertical-align: middle;" src="' + url  + '"/></a>' 
+            : "⇒"; 
     }
 
-    return $('<tr><th><span>⇒ </span>'+ generateThumbnail(topic._thumbnail) + '<a href="' + topic._url + '"><b>'+ topic._title + '</b></a></th></tr>');
+    
+    var row = $('<tr></tr>');
+    var cell = $('<th></th>');
+    var row_bullet = $('<th class="bullet">'+ generateThumbnail(topic)+ '</th>');
+    var link = $('<a href="' + topic._url + '"><b>'+ topic._title + '</b></a>' +
+        '<br/><a style="font-size:12px;" href="'+ topic._commentLink + '"> ' + topic._numComments + ' comments </a>');
+
+    cell.append(link);
+    return row.append.apply(row, [row_bullet, cell]);
 }
 
 function generateWeatherView(cityName, forecast) {

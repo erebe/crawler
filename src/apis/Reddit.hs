@@ -28,6 +28,7 @@ data Topic = Topic { _title :: T.Text
                    , _commentLink :: String
                    , _thumbnail :: String
                    , _date :: Integer
+                   , _numComments :: Integer
 
                    } deriving (Show, Generic)
 
@@ -59,9 +60,10 @@ decodeAPI js = do
             topic <- container .: "data"
             Topic <$> topic .: "title"
                   <*> topic .: "url"
-                  <*> topic .: "permalink"
+                  <*> (("https://www.reddit.com" ++ ) <$> topic .: "permalink")
                   <*> topic .: "thumbnail"
                   <*> topic .: "created"
+                  <*> topic .: "num_comments"
 
 fetchSubReddit :: [String] -> IO [Reddit]
 fetchSubReddit subRedditNames = do

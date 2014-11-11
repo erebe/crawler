@@ -149,12 +149,19 @@ thead, h1 {
     display: inline-block;
     vertical-align: top;
     margin   : 20px;
-    width    : 45%;
+    width    : 800px;
     text-align: left;
+    table-layout:fixed;
 }
 
- th {
-    margin-top : 20px;
+.reddit-item th {
+    padding-top: 5px;
+}
+.reddit-item .bullet  {
+
+    display: inline;
+    margin-right: 10px;
+    text-align: center;
 }
 
 b {
