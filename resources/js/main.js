@@ -63,22 +63,22 @@ jQuery(document).ready(function($) {
 
 document.body.onload = function () {
 
-    callAjax("/video/", function(data) { loadVideos(data, $("#videos")); });
-    callAjax("/serie/", function(data) { loadSeries(data, $("#series")); });
-    callAjax("/anime/", function(data) { loadAnimes(data, $("#animes")); });
-    callAjax("/meteo/", function(data) { loadWeather(data, $("#weathers")); });
-    callAjax("/reddit/", function(data) { loadReddit(data, $("#reddits")); });
+    callAjax("/api/video/", function(data) { loadVideos(data, $("#videos")); });
+    callAjax("/api/serie/", function(data) { loadSeries(data, $("#series")); });
+    callAjax("/api/anime/", function(data) { loadAnimes(data, $("#animes")); });
+    callAjax("/api/meteo/", function(data) { loadWeather(data, $("#weathers")); });
+    callAjax("/api/reddit/", function(data) { loadReddit(data, $("#reddits")); });
 
 };
 
 function loadReddit(data, container)
 {
     var json = JSON.parse(data);
-    var subs = json.filter(function(sub) { return sub._topics.length; } )
+    var subs = json.filter(function(sub) { return sub.topics.length; } )
                    .map(function(sub) {
-                        var table = $("<table class='item reddit-item'><thead><tr><th><h1>"+ sub._name +"</h1></th></tr></thead></table>");
-                        return table.append.apply( table, sub._topics.map(function(topic) {
-                            return generateRedditView(sub._name, topic); }));
+                        var table = $("<table class='item reddit-item'><thead><tr><th><h1>"+ sub.name +"</h1></th></tr></thead></table>");
+                        return table.append.apply( table, sub.topics.map(function(topic) {
+                            return generateRedditView(sub.name, topic); }));
                      });
 
     container.append.apply(container, subs);
@@ -100,10 +100,10 @@ function loadWeather(data, container)
 function loadAnimes(data, container)
 {
     var json = JSON.parse(data);
-    var animes = json.filter(function(anime) { return anime._episodes.length; } )
-                     .sort(function(a,b) { return a._episodes[0]._date < b._episodes[0]._date;} )
+    var animes = json.filter(function(anime) { return anime.episodes.length; } )
+                     .sort(function(a,b) { return a.episodes[0].date < b.episodes[0].date;} )
                      .map(function(anime) {
-                         return anime._episodes.map(function(episode) {
+                         return anime.episodes.map(function(episode) {
                              return generateAnimeView(anime, episode); });
                      });
 
@@ -114,10 +114,10 @@ function loadAnimes(data, container)
 function loadVideos(data, container)
 {
     var json = JSON.parse(data);
-    var videos = json.filter(function(channel) { return channel._videos.length; } )
+    var videos = json.filter(function(channel) { return channel.videos.length; } )
                      .map(function(channel) {
-                         return channel._videos.map(function(video) {
-                             return generateVideoView(channel._name, video); });
+                         return channel.videos.map(function(video) {
+                             return generateVideoView(channel.name, video); });
                      });
 
 
@@ -128,11 +128,11 @@ function loadVideos(data, container)
 function loadSeries(data, container)
 {
     var json = JSON.parse(data);
-    var series = json.filter(function(serie) { return serie._episodes.length} )
-                     .sort(function(a,b) { return a._episodes[0]._date < b._episodes[0]._date;} )
+    var series = json.filter(function(serie) { return serie.episodes.length} )
+                     .sort(function(a,b) { return a.episodes[0].date < b.episodes[0].date;} )
                      .map(function(serie) {
-                        return serie._episodes.map(function(episode) {
-                            return generateSerieView (serie._name, episode);
+                        return serie.episodes.map(function(episode) {
+                            return generateSerieView (serie.name, episode);
 
                         });
                     });
@@ -145,19 +145,19 @@ function loadSeries(data, container)
 
 function generateRedditView(subName, topic)
 {
-    var generateThumbnail = function(topic) { 
-        var url = topic._thumbnail;
-        return (url.length && url != "self") ?  
-            '<a href="'+ topic._url + '"><img style="vertical-align: middle;" src="' + url  + '"/></a>' 
-            : "⇒"; 
+    var generateThumbnail = function(topic) {
+        var url = topic.thumbnail;
+        return (url.length && url != "self") ?
+            '<a href="'+ topic.url + '"><img style="vertical-align: middle;" src="' + url  + '"/></a>'
+            : "⇒";
     }
 
-    
+
     var row = $('<tr></tr>');
     var cell = $('<th></th>');
     var row_bullet = $('<th class="bullet">'+ generateThumbnail(topic)+ '</th>');
-    var link = $('<a href="' + topic._url + '"><b>'+ topic._title + '</b></a>' +
-        '<br/><a style="font-size:12px;" href="'+ topic._commentLink + '"> ' + topic._numComments + ' comments </a>');
+    var link = $('<a href="' + topic.url + '"><b>'+ topic.title + '</b></a>' +
+        '<br/><a style="font-size:12px;" href="'+ topic.commentLink + '"> ' + topic.numComments + ' comments </a>');
 
     cell.append(link);
     return row.append.apply(row, [row_bullet, cell]);
@@ -182,7 +182,7 @@ function generateWeatherView(cityName, forecast) {
     header.click(function(event) {
         event.preventDefault();
         $(".cd-panel-header-title").html(cityName);
-        callAjax("/meteo/" + cityName, function(data) {
+        callAjax("/api/meteo/" + cityName, function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadWeather(data, panel);
@@ -199,28 +199,28 @@ function generateAnimeView(anime, episode)
     var container = $("<div class='item anime-item'></div>");
 
     var header = $('<header>' +
-                       '<a href=""><h1>' + anime._name + '</h1></a>' +
+                       '<a href=""><h1>' + anime.name + '</h1></a>' +
                    '</header>'
                   );
 
     var thumbnail = $('<div class="thumbnail">' +
-                        '<a href="' + episode._magnetURI + '">' +
-                        '<img src="' + anime._thumbnail + '" /></a>' +
+                        '<a href="' + episode.magnetURI + '">' +
+                        '<img src="' + anime.thumbnail + '" /></a>' +
                       '</div>'
                      );
 
-    var date = new Date(episode._date * 1000);
+    var date = new Date(episode.date * 1000);
     var footer = $('<footer>' +
-                     '<a href="' + episode._magnetURI + '">' +
-                         '<h3>' + episode._title + '</h3>' +
+                     '<a href="' + episode.magnetURI + '">' +
+                         '<h3>' + episode.title + '</h3>' +
                          '<h3>' + date.toLocaleDateString() + '</h3>' +
                      '</a>' +
                    '</footer>');
 
     header.click(function(event) {
         event.preventDefault();
-        $(".cd-panel-header-title").html(anime._name);
-        callAjax("/anime/" + anime._name, function(data) {
+        $(".cd-panel-header-title").html(anime.name);
+        callAjax("/api/anime/" + anime.name, function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadAnimes(data, panel);
@@ -240,10 +240,10 @@ function generateSerieView(serieName, episode)
                    '<a href=""><h1>' + serieName + '</h1></a>' +
                    '</header>');
 
-    var date = new Date(episode._date * 1000);
+    var date = new Date(episode.date * 1000);
     var footer = $('<footer class="footer">' +
-                        '<a href="' + episode._magnetURI + '">' +
-                            '<h3>' + episode._title + '</h3>' +
+                        '<a href="' + episode.magnetURI + '">' +
+                            '<h3>' + episode.title + '</h3>' +
                             '<h3>' + date.toLocaleDateString() + '</h3>' +
                         '</a>' +
                     '</footer>'
@@ -253,7 +253,7 @@ function generateSerieView(serieName, episode)
     header.click(function(event) {
         event.preventDefault();
         $(".cd-panel-header-title").html(serieName);
-        callAjax("/serie/" + serieName, function(data) {
+        callAjax("/api/serie/" + serieName, function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadSeries(data, panel);
@@ -278,14 +278,14 @@ function generateVideoView(channelName, video)
                   );
 
     var thumbnail = $('<div class="thumbnail">' +
-                       '<a href="' + video._url + '">' +
-                           '<img src="' + video._thumbnail + '"/>' +
+                       '<a href="' + video.url + '">' +
+                           '<img src="' + video.thumbnail + '"/>' +
                        '</a>' +
                      '</div>'
                     );
 
     var footer = $('<div class="footer">' +
-                     '<a href="' + video._url + '">' +  video._title + '</a>' +
+                     '<a href="' + video.url + '">' +  video.title + '</a>' +
                    '</div>'
                  );
 
@@ -293,7 +293,7 @@ function generateVideoView(channelName, video)
     header.click(function(event) {
         event.preventDefault();
         $(".cd-panel-header-title").html(channelName);
-        callAjax("/video/" + channelName, function(data) {
+        callAjax("/api/video/" + channelName, function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadVideos(data, panel);

@@ -215,7 +215,6 @@ runRestServer queue = scotty 8086 $ do
     get "/assets/:folder/:file" $ do
         folderName   <- param "folder" :: ActionM String
         fileName   <- param "file" :: ActionM String
-        _ <- liftIO $ print (folderName ++ "  " ++ fileName)
         file ("resources/" ++ folderName ++ "/" ++ fileName)
 
 
