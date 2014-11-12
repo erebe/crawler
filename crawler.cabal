@@ -16,10 +16,10 @@ Executable          crawler
     main-is:             main.hs
     Build-Depends:       base, bytestring, monad-control, async,
                          http-conduit, http-types, failure,
-                         transformers, lifted-base, xml, lens,
+                         transformers, lifted-base, lens,
                          directory, unbounded-delays, scotty,
                          aeson, aeson-pretty, ghc-prim,
-                         text, time, exceptions, unix-time
+                         text, time, exceptions, unix-time, tagsoup
 
 Library
     ghc-options:     -O3 -Wall 

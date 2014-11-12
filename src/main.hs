@@ -33,6 +33,10 @@ import           Data.Time
 import           System.Timeout
 
 import           Control.Monad.Trans.Maybe(MaybeT, runMaybeT)
+import           Data.UnixTime
+
+instance ToJSON UnixTime where
+    toJSON = toJSON . show . utSeconds 
 
 instance ToJSON Weather.Forecast
 instance ToJSON Weather.Weather

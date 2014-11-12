@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
 
@@ -12,9 +11,9 @@ module Eztv ( Serie()
 import           Http(getPages)
 
 import qualified Data.ByteString.Lazy as BL
-import qualified Data.ByteString.Char8 as BC
+import qualified Data.ByteString.Lazy.Char8 as BLC
 
-import qualified Text.XML.Light as XML
+import           Text.HTML.TagSoup
 import           Control.Applicative
 import           Control.Monad
 import           Data.Maybe
@@ -23,13 +22,14 @@ import           Data.UnixTime
 
 import           Control.Lens
 import           GHC.Generics
+import           Data.List
 
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 
 data Episode = Episode { _title      :: T.Text
                         ,_magnetURI :: String
-                        ,_date      :: String
+                        ,_date      :: UnixTime
                         ,_link      :: String
                         ,_fileName  :: String
 
@@ -46,20 +46,19 @@ $(makeLenses ''Serie)
 
 
 extractData :: BL.ByteString -> [Episode]
-extractData xmlStr = (\el ->  title      .~ (T.decodeUtf8 . BC.pack $ extractString (findElemByName "title" el))
-                            $ link      .~ extractString (findElemByName "link" el)
-                            $ date      .~ (show . utSeconds $ parseUnixTime webDateFormat (BC.pack $ extractString (findElemByName "pubDate" el)))
-                            $ magnetURI .~ extractString (findElem "magnetURI" "http://xmlns.ezrss.it/0.1/" el)
-                            $ fileName  .~ extractString (findElem "fileName" "http://xmlns.ezrss.it/0.1/" el)
-                            $ Episode "" "" "" "" ""
+extractData xmlStr = do
+    let tags = parseTagsOptions parseOptionsFast xmlStr
+    let items = partitions (~== "<item>") tags
+    catMaybes $ mkEpisode <$> items
 
-                      ) <$> concat (findItems <$> parseXml xmlStr)
-        where
-            parseXml                   = XML.onlyElems . XML.parseXML
-            findElemByName tagName     = XML.findElement (XML.QName tagName Nothing Nothing)
-            findElem tagName tagUri    = XML.findElement (XML.QName tagName (Just tagUri) Nothing)
-            findItems                  = XML.findElements (XML.QName "item" Nothing Nothing)
-            extractString el           = fromMaybe "" $ XML.strContent <$> el
+    where
+        extractTextFromTag tag tags = maybeTagText =<< (listToMaybe . drop 1 $ dropWhile (~/= tag) tags)
+        mkEpisode tags = Episode <$> (T.decodeUtf8 . BL.toStrict <$> extractTextFromTag "<title>" tags)
+                                 <*> (BLC.unpack <$> extractTextFromTag "<magnetURI>" tags )
+                                 <*> (parseUnixTime webDateFormat . BL.toStrict <$> extractTextFromTag "<pubDate>" tags )
+                                 <*> (BLC.unpack . fromAttrib (BLC.pack "url") <$> find (~== "<enclosure>") tags)
+                                 <*> (BLC.unpack <$> extractTextFromTag "<fileName>" tags)
+
 
 craftEzrssUrl :: String -> String
 craftEzrssUrl nameS = protocol ++ baseUrl ++ buildArgs
