@@ -2,6 +2,8 @@
 {-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternGuards     #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE CPP #-}
 
 import qualified Reddit
 import qualified Eztv as Serie
@@ -24,8 +26,8 @@ import           Network.HTTP.Types.Status       (ok200)
 
 import qualified Data.Text as T
 
-import           Data.Aeson
-import           Data.Aeson.Encode.Pretty
+import           Data.Aeson hiding (json)
+import           Data.Aeson.TH
 
 import           Data.List
 
@@ -35,19 +37,26 @@ import           System.Timeout
 import           Control.Monad.Trans.Maybe(MaybeT, runMaybeT)
 import           Data.UnixTime
 
-instance ToJSON UnixTime where
-    toJSON = toJSON . show . utSeconds 
 
-instance ToJSON Weather.Forecast
-instance ToJSON Weather.Weather
-instance ToJSON Serie.Episode
-instance ToJSON Serie.Serie
-instance ToJSON Video.Video
-instance ToJSON Video.Channel
-instance ToJSON Anime.Episode
-instance ToJSON Anime.Anime
-instance ToJSON Reddit.Topic
-instance ToJSON Reddit.Reddit
+instance ToJSON UnixTime where
+    toJSON = toJSON . show . utSeconds
+
+#define JSON_OPTIONS defaultOptions {fieldLabelModifier = dropWhile (== '_')}
+$(deriveToJSON JSON_OPTIONS ''Weather.Forecast)
+$(deriveToJSON JSON_OPTIONS ''Weather.Weather)
+
+$(deriveToJSON JSON_OPTIONS ''Serie.Episode)
+$(deriveToJSON JSON_OPTIONS ''Serie.Serie)
+
+$(deriveToJSON JSON_OPTIONS ''Video.Video)
+$(deriveToJSON JSON_OPTIONS ''Video.Channel)
+
+$(deriveToJSON JSON_OPTIONS ''Anime.Episode)
+$(deriveToJSON JSON_OPTIONS ''Anime.Anime)
+
+$(deriveToJSON JSON_OPTIONS ''Reddit.Topic)
+$(deriveToJSON JSON_OPTIONS ''Reddit.Reddit)
+#undef JSON_OPTIONS
 
 newtype Configuration = Configuration [(String, [String])]
 
@@ -99,28 +108,28 @@ class ServiceAction a where
     dispatch :: String -> a -> Maybe (ActionM ())
 
 instance ServiceAction ServiceData where
-    listA (SerieData series)   = Just $ raw . encodePretty $ series^..traverse.Serie.name
-    listA (VideoData channels) = Just $ raw . encodePretty $ channels^..traverse.Video.name
-    listA (MeteoData cities)   = Just $ raw . encodePretty $ Weather.city <$> cities
-    listA (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traverse.Anime.name
-    listA (RedditData reddits) = Just $ raw . encodePretty $ reddits^..traverse.Reddit.name
+    listA (SerieData series)   = Just . json $ series^..traverse.Serie.name
+    listA (VideoData channels) = Just . json $ channels^..traverse.Video.name
+    listA (MeteoData cities)   = Just . json $ Weather.city <$> cities
+    listA (AnimeData animes)   = Just . json $ animes^..traverse.Anime.name
+    listA (RedditData reddits) = Just . json $ reddits^..traverse.Reddit.name
     listA _                    = Nothing
 
-    lastA (SerieData series)   = Just $ raw . encodePretty $ [serie & Serie.episodes .~ take 1 (serie^.Serie.episodes) | serie <- series]
-    lastA (VideoData channels) = Just $ raw . encodePretty $ [channel & Video.videos .~ take 1 (channel^.Video.videos) | channel <- channels]
-    lastA (MeteoData cities)   = Just $ raw . encodePretty $ [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- cities]
-    lastA (AnimeData animes)   = Just $ raw . encodePretty $ [ anime & Anime.episodes .~ take 1 (anime^.Anime.episodes)| anime <- animes]
-    lastA (RedditData reddits) = Just $ raw . encodePretty $ [ reddit & Reddit.topics .~ take 25 (reddit^.Reddit.topics)| reddit <- reddits]
+    lastA (SerieData series)   = Just . json $ [serie & Serie.episodes .~ take 1 (serie^.Serie.episodes) | serie <- series]
+    lastA (VideoData channels) = Just . json $ [channel & Video.videos .~ take 1 (channel^.Video.videos) | channel <- channels]
+    lastA (MeteoData cities)   = Just . json $ [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- cities]
+    lastA (AnimeData animes)   = Just . json $ [ anime & Anime.episodes .~ take 1 (anime^.Anime.episodes)| anime <- animes]
+    lastA (RedditData reddits) = Just . json $ [ reddit & Reddit.topics .~ take 25 (reddit^.Reddit.topics)| reddit <- reddits]
     lastA _                    = Nothing
 
 
-    findA toFind (SerieData series)   = Just $ raw . encodePretty $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Serie.name))
-    findA toFind (VideoData channels) = Just $ raw . encodePretty $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Video.name))
-    findA toFind (AnimeData animes)   = Just $ raw . encodePretty $ animes^..traversed.filtered (\anime -> toFind `isInfixOf` (anime^.Anime.name))
-    findA toFind (RedditData reddits) = Just $ raw . encodePretty $ reddits^..traversed.filtered (\reddit -> toFind `isInfixOf` (reddit^.Reddit.name))
-    findA toFind (MeteoData cities)   = Just $ raw . encodePretty $ [ city | city <- cities, T.toLower (T.pack toFind)
-                                                                                             `T.isInfixOf`
-                                                                                             T.toLower (Weather.city city)]
+    findA toFind (SerieData series)   = Just . json $ series^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Serie.name))
+    findA toFind (VideoData channels) = Just . json $ channels^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Video.name))
+    findA toFind (AnimeData animes)   = Just . json $ animes^..traversed.filtered (\anime -> toFind `isInfixOf` (anime^.Anime.name))
+    findA toFind (RedditData reddits) = Just . json $ reddits^..traversed.filtered (\reddit -> toFind `isInfixOf` (reddit^.Reddit.name))
+    findA toFind (MeteoData cities)   = Just . json $ [ city | city <- cities, T.toLower (T.pack toFind)
+                                                                                            `T.isInfixOf`
+                                                                                            T.toLower (Weather.city city)]
     findA _ _                         = Nothing
 
     dispatch arg | "list" <- arg = listA
@@ -193,24 +202,20 @@ spawnFetcher = do
 
 runRestServer ::  MVar [(Service, ServiceData)] -> IO ()
 runRestServer queue = scotty 8086 $ do
-    get "/:type/:val" $ do
+    get "/api/:type/:val" $ do
         service   <- param "type" :: ActionM String
         action    <- param "val"  :: ActionM String
         services  <- liftIO $ readMVar queue
 
         let requestResult = dispatch action =<< lookup (strToService service) services
 
-        case requestResult of
-            Just result -> do
-                           setHeader "Content-type" "application/json; charset=utf-8"
-                           result
+        fromMaybe next requestResult
 
-            Nothing     -> next
 
     get "/assets/:folder/:file" $ do
-        --TODO check inputs
         folderName   <- param "folder" :: ActionM String
         fileName   <- param "file" :: ActionM String
+        _ <- liftIO $ print (folderName ++ "  " ++ fileName)
         file ("resources/" ++ folderName ++ "/" ++ fileName)
 
 

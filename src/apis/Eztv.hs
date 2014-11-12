@@ -1,5 +1,4 @@
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 module Eztv ( Serie()
             , name, episodes
@@ -21,7 +20,6 @@ import           Data.Maybe
 import           Data.UnixTime
 
 import           Control.Lens
-import           GHC.Generics
 import           Data.List
 
 import qualified Data.Text as T
@@ -33,12 +31,12 @@ data Episode = Episode { _title      :: T.Text
                         ,_link      :: String
                         ,_fileName  :: String
 
-                        } deriving (Show, Generic)
+                        } deriving (Show)
 
 data Serie = Serie { _name :: String
                     ,_episodes  :: [Episode]
 
-                   } deriving (Show, Generic)
+                   } deriving (Show)
 
 $(makeLenses ''Episode)
 $(makeLenses ''Serie)

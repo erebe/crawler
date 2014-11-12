@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 
 module OpenWeather ( Forecast(Forecast, date, temperature, description, iconUrl)
@@ -11,7 +10,6 @@ module OpenWeather ( Forecast(Forecast, date, temperature, description, iconUrl)
 import           Control.Applicative
 
 import           Http(getPages)
-import           GHC.Generics
 
 import qualified Data.ByteString.Lazy       as BL
 import qualified Data.Text as T
@@ -29,11 +27,11 @@ data Forecast = Forecast { date :: T.Text
                          , temperature :: !Double
                          , description :: T.Text
                          , iconUrl :: T.Text
-                         } deriving (Show, Generic)
+                         } deriving (Show)
 
 data Weather = Weather { city :: T.Text
                        , forecasts :: [Forecast]
-                       }  deriving (Show, Generic)
+                       }  deriving (Show)
 
 
 mkForecast :: Int64 -> Double -> T.Text -> T.Text -> Forecast

@@ -1,6 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Haruhichan ( Episode()
@@ -18,7 +17,6 @@ import qualified Data.ByteString.Lazy       as BL
 import           Control.Applicative
 import           Data.Maybe
 
-import           GHC.Generics
 import           Control.Lens
 
 import qualified Data.Text as T
@@ -32,14 +30,14 @@ data Episode = Episode { _title :: T.Text
                         ,_magnetURI :: String
                         ,_date :: String
 
-                       } deriving (Show, Read, Generic)
+                       } deriving (Show)
 
 
 data Anime = Anime { _name      :: String
                     , _thumbnail :: String
                     , _episodes  :: [Episode]
 
-                   } deriving (Show, Read, Generic)
+                   } deriving (Show)
 
 $(makeLenses ''Episode)
 $(makeLenses ''Anime)

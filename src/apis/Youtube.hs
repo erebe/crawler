@@ -1,6 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Youtube ( Video()
@@ -19,7 +18,6 @@ import           Control.Applicative
 import           Data.Maybe
 
 import           Control.Lens
-import           GHC.Generics
 
 import           Data.UnixTime
 
@@ -34,12 +32,12 @@ data Video = Video { _title     :: T.Text
                     ,_thumbnail :: String
                     ,_date      :: String
 
-                   } deriving (Show, Read, Generic)
+                   } deriving (Show, Read)
 
 data Channel = Channel { _name   :: String
                         ,_videos :: [Video]
 
-                       } deriving (Show, Read, Generic)
+                       } deriving (Show, Read)
 
 
 

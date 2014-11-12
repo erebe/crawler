@@ -1,6 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 
@@ -13,7 +12,6 @@ import qualified Data.ByteString.Lazy       as BL
 import           Control.Applicative
 import           Data.Maybe
 
-import           GHC.Generics
 import           Control.Lens
 
 import qualified Data.Text as T
@@ -30,12 +28,12 @@ data Topic = Topic { _title :: T.Text
                    , _date :: Integer
                    , _numComments :: Integer
 
-                   } deriving (Show, Generic)
+                   } deriving (Show)
 
 data Reddit = Reddit { _name :: String
                      , _topics :: [Topic]
 
-                     } deriving (Show, Generic)
+                     } deriving (Show)
 
 
 $(makeLenses ''Topic)
