@@ -61,13 +61,14 @@ extractData xmlStr = do
 
 
 craftEzrssUrl :: String -> String
-craftEzrssUrl nameS = protocol ++ baseUrl ++ buildArgs
+craftEzrssUrl names = protocol ++ baseUrl ++ buildArgs
     where
         protocol  = "http://"
         baseUrl   = "ezrss.it/search/index.php"
         args      = [ ("simple", "")
                      ,("mode", "rss")
-                     ,("show_name", nameS)
+                     ,("show_name_exact", "true")
+                     ,("show_name", names)
                     ]
         buildArgs = '?' : ( drop 1 . join $
                             (\(x, y) -> "&" ++ x ++ "=" ++ y ) <$> args
