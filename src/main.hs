@@ -128,8 +128,8 @@ instance ServiceAction ServiceData where
     findA toFind (AnimeData animes)   = Just . json $ animes^..traversed.filtered (\anime -> toFind `isInfixOf` (anime^.Anime.name))
     findA toFind (RedditData reddits) = Just . json $ reddits^..traversed.filtered (\reddit -> toFind `isInfixOf` (reddit^.Reddit.name))
     findA toFind (MeteoData cities)   = Just . json $ [ city | city <- cities, T.toLower (T.pack toFind)
-                                                                                            `T.isInfixOf`
-                                                                                            T.toLower (Weather.city city)]
+                                                                                         `T.isInfixOf`
+                                                                                          T.toLower (Weather.city city)]
     findA _ _                         = Nothing
 
     dispatch arg | "list" <- arg = listA
@@ -171,9 +171,10 @@ spawnFetcher = do
         return fetchRes
 
         where
-            waitForOneMin = let micro = (6 :: Int) in timeout (10^micro * 60 * 10)
-            getLocalTime = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
-            services = [Video, Serie, Meteo, Anime, Reddit]
+            timeoutAfterMin nbMin = let micro = (6 :: Int) in timeout (10^micro * 60 * nbMin)
+            rescheduleInOneHour   = delay (1000000 * 60 * 60)
+            getLocalTime          = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
+            services              = [Video, Serie, Meteo, Anime, Reddit]
 
             fetcher queue = forever $ do
                     config   <- loadConfigFile
@@ -184,7 +185,7 @@ spawnFetcher = do
                     putStrLn . ("Start fetching :: " ++ ) . show =<< getLocalTime
 
                     handles      <- forM fetchers $ \(service, fetcher') -> do
-                                       handle <- async $ waitForOneMin fetcher'
+                                       handle <- async $ timeoutAfterMin 10 fetcher'
                                        return (service, handle)
 
                     servicesData <- forM handles $ \(service, handle) -> do
@@ -197,7 +198,7 @@ spawnFetcher = do
                     putStrLn . ("Done fetching :: " ++ ) . show =<< getLocalTime
                     putStrLn "---------------------------------------------------"
 
-                    delay (1000000 * 60 * 60) -- Every hour
+                    rescheduleInOneHour
 
 
 runRestServer ::  MVar [(Service, ServiceData)] -> IO ()
