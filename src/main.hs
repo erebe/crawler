@@ -16,13 +16,14 @@ import           Control.Concurrent.Async        (async, wait)
 import           Control.Concurrent.MVar         (MVar, newMVar, readMVar, swapMVar)
 import           Control.Concurrent.Thread.Delay (delay)
 import           Control.Monad                   (forever, guard, forM)
-import           Data.Maybe                      (fromMaybe)
+import           Data.Maybe                      (fromMaybe, isJust, fromJust)
 import           System.Directory                (getHomeDirectory, doesFileExist)
 
 import           Control.Lens                    hiding ((.=))
 import           Control.Monad.IO.Class          (liftIO)
 import           Web.Scotty
 import           Network.HTTP.Types.Status       (ok200)
+import           Text.Read                       (readMaybe)
 
 import qualified Data.Text as T
 
@@ -161,7 +162,10 @@ loadConfigFile = do
             isConfigPresent <- liftIO $ doesFileExist configPath
             guard isConfigPresent
 
-            liftIO $ read <$> readFile configPath
+            cfg <- liftIO $ readMaybe <$> readFile configPath :: MaybeT IO (Maybe [(String, [String])])
+            guard (isJust cfg)
+            return $ fromJust cfg
+
 
 
 spawnFetcher :: IO (MVar [(Service, ServiceData)])
