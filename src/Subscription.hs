@@ -1,48 +1,79 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE RankNTypes #-}
 
-module Subscription where
 
-import qualified Eztv        as Serie
-import qualified Haruhichan  as Anime
-import qualified OpenWeather as Weather
+module Subscription 
+                    -- ( Subscription, name, inputs, outputs, convert
+                    -- , Provider(Youtube, Serie, Anime, Reddit, Forecast)
+                    -- , onSub
+                    -- , onSubM
+                    -- , mkProvider
+                    -- ) 
+                    where
+
+import qualified Eztv
+import qualified Haruhichan
+import qualified OpenWeather
 import qualified Reddit
 import qualified Youtube
 
--- import           Control.Applicative             ((<$>))
+import           Control.Applicative ((<$>))
+
+data Service = Youtubee
+
 
 data Subscription input output = Subscription {
-                name    :: String
-               ,inputs  :: [input]
+               inputs  :: [input]
                ,outputs :: [output]
-               ,fetch   :: [input] -> IO [output]
-            }
+               -- ,fetcher :: [input] -> IO [output]
+
+            } deriving (Show)
 
 data Provider = Youtube (Subscription String Youtube.Channel)
-              | Eztv (Subscription String Serie.Serie)
-              | Anime (Subscription String Anime.Anime)
+              | Serie (Subscription String Eztv.Serie)
+              | Anime (Subscription String Haruhichan.Anime)
               | Reddit (Subscription String Reddit.Reddit)
-              | Weather (Subscription String Weather.Weather)
+              | Forecast (Subscription String OpenWeather.Weather)
 
-mkSubscription :: String -> Maybe Provider
-mkSubscription "youtube" = return $ Youtube $ Subscription "youtube" [] [] Youtube.fetchChannels
-mkSubscription "serie"   = return $ Eztv $ Subscription "serie" [] [] Serie.fetchSeries 
-mkSubscription "anime"   = return $ Anime $ Subscription "anime" [] [] Anime.fetchAnimes
-mkSubscription "reddit"  = return $ Reddit $ Subscription "reddit" [] [] Reddit.fetchSubReddit
-mkSubscription "weather" = return $ Weather $ Subscription "weather" [] [] Weather.fetchWeathers
-mkSubscription _         = Nothing
+              deriving (Show)
+
+name :: Provider -> String
+name (Youtube _)  = "youtube"
+name (Serie _)    = "serie"
+name (Reddit _)   = "reddit"
+name (Anime _)    = "anime"
+name (Forecast _) = "forecast"
+
+fetch :: Provider -> IO Provider
+fetch (Youtube sub)   = Youtube  <$> ((\out -> sub { outputs = out} ) <$> Youtube.fetchChannels (inputs sub))
+fetch (Serie sub)     = Serie    <$> ((\out -> sub { outputs = out} ) <$> Eztv.fetchSeries (inputs sub))
+fetch (Reddit sub)    = Reddit   <$> ((\out -> sub { outputs = out} ) <$> Reddit.fetchSubReddit (inputs sub))
+fetch (Anime sub)     = Anime    <$> ((\out -> sub { outputs = out} ) <$> Haruhichan.fetchAnimes (inputs sub))
+fetch (Forecast sub)  = Forecast <$> ((\out -> sub { outputs = out} ) <$> OpenWeather.fetchWeathers (inputs sub))
+
+
+onSub :: Provider -> (forall a b. Subscription a b -> Subscription a b) -> Provider
+onSub (Youtube sub) f  = Youtube  $ f sub
+onSub (Serie sub) f    = Serie    $ f sub
+onSub (Reddit sub) f   = Reddit   $ f sub
+onSub (Anime sub) f    = Anime    $ f sub
+onSub (Forecast sub) f = Forecast $ f sub
+
+onSubM :: Functor m => Provider -> (forall a b. Subscription a b -> m (Subscription a b)) -> m Provider
+onSubM (Youtube sub) f  = Youtube  <$> f sub
+onSubM (Serie sub) f    = Serie    <$> f sub
+onSubM (Reddit sub) f   = Reddit   <$> f sub
+onSubM (Anime sub) f    = Anime    <$> f sub
+onSubM (Forecast sub) f = Forecast <$> f sub
+
+
+-- fetch :: Provider -> IO Provider
+-- fetch provider = onSubM provider (\sub -> (\outs -> sub { outputs = outs }) <$> fetcher sub (inputs sub))
 --
---
--- fetch :: Subscription -> IO Subscription
--- fetch (Youtube args  _) = Youtube args <$> Youtube.fetchChannels args
--- fetch (Serie args    _) = Serie args   <$> Serie.fetchSeries args
--- fetch (Anime args    _) = Anime args   <$> Anime.fetchAnimes args
--- fetch (Weather args  _) = Weather args <$> Weather.fetchWeathers args
--- fetch (Reddit args   _) = Reddit args  <$> Reddit.fetchSubReddit args
---
---
---
---
--- data Config = Config  {
---         application :: [(String, String)]
---        ,subscription :: [(String, String)]
---     } deriving (Show, Read)
+-- mkProvider :: String -> Maybe Provider
+-- mkProvider "youtube" = return $ Youtube (Subscription "youtube" [] [])
+-- mkProvider "serie"   = return $ Serie (Subscription "serie" [] [])
+-- mkProvider "anime"   = return $ Anime (Subscription "anime" [] [])
+-- mkProvider "reddit"  = return $ Reddit (Subscription "reddit" [] []) 
+-- mkProvider "weather" = return $ Forecast (Subscription "forecast" [] []) 
+-- mkProvider _         = Nothing
+
