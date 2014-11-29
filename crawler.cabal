@@ -12,17 +12,17 @@ build-type:          Simple
 Executable          crawler
     hs-source-dirs:       src src/apis
     ghc-options:         -Wall -O3 -threaded
-    ghc-prof-options:-prof -fprof-auto -rtsopts
-    main-is:             main.hs
-    Build-Depends:       base, bytestring, monad-control, async,
-                         http-conduit, http-types, failure,
-                         transformers, lifted-base, lens,
-                         directory, unbounded-delays, scotty,
-                         aeson, aeson-pretty, ghc-prim, tuple,
-                         text, time, exceptions, unix-time, tagsoup,
-                         template-haskell
+    --ghc-prof-options:-prof -fprof-auto -rtsopts
+    main-is:             Main.hs
+    Build-Depends:       base,  async
+                        ,scotty, http-conduit, http-types
+                        ,transformers, lens
+                        ,directory, unbounded-delays
+                        ,aeson, tagsoup
+                        ,text, bytestring
+                        ,time, unix-time
 
 Library
-    ghc-options:     -O3 -Wall 
-    ghc-prof-options:-prof -fprof-auto -rtsopts
+    ghc-options:     -O3 -Wall
+    --ghc-prof-options:-prof -fprof-auto -rtsopts
 
