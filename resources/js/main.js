@@ -63,10 +63,10 @@ jQuery(document).ready(function($) {
 
 document.body.onload = function () {
 
-    callAjax("/api/video/", function(data) { loadVideos(data, $("#videos")); });
+    callAjax("/api/youtube/", function(data) { loadVideos(data, $("#videos")); });
     callAjax("/api/serie/", function(data) { loadSeries(data, $("#series")); });
     callAjax("/api/anime/", function(data) { loadAnimes(data, $("#animes")); });
-    callAjax("/api/meteo/", function(data) { loadWeather(data, $("#weathers")); });
+    callAjax("/api/forecast/", function(data) { loadWeather(data, $("#weathers")); });
     callAjax("/api/reddit/", function(data) { loadReddit(data, $("#reddits")); });
 
 };
