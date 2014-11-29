@@ -18,8 +18,9 @@ Executable          crawler
                          http-conduit, http-types, failure,
                          transformers, lifted-base, lens,
                          directory, unbounded-delays, scotty,
-                         aeson, aeson-pretty, ghc-prim, 
-                         text, time, exceptions, unix-time, tagsoup
+                         aeson, aeson-pretty, ghc-prim, tuple,
+                         text, time, exceptions, unix-time, tagsoup,
+                         template-haskell
 
 Library
     ghc-options:     -O3 -Wall 
