@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
 
-module Config (load) where
+module Config (load, AppConfig, app, subscriptions, listenOn) where
 
 import           Service              as S
 
@@ -15,23 +15,36 @@ import           Text.Read                 (readMaybe)
 
 import           Data.UnixTime
 
-data CrawlerConfig = Config {
+data Application = Application {
+     listenOn :: Int
+    } deriving (Show, Read)
+
+data Services = Services {
       youtube  :: Config S.Youtube
     , reddit   :: Config S.Reddit
     , serie    :: Config S.Serie
     , anime    :: Config S.Anime
     , forecast :: Config S.Forecast
-
     } deriving (Show, Read)
 
+data CrawlerConfig = Config {
+      application :: Application
+    , services :: Services
+    } deriving (Show, Read)
+
+data AppConfig = MkConfig {
+      app :: Application
+    , subscriptions :: [Service Any]
+    } deriving (Show)
 
 
-cfgToServices :: CrawlerConfig -> [Service Any]
-cfgToServices cfg = [ fromConfig $ Config.youtube cfg
-                    , fromConfig $ Config.reddit cfg
-                    , fromConfig $ Config.serie cfg
-                    , fromConfig $ Config.anime cfg
-                    , fromConfig $ Config.forecast cfg
+cfgToServices :: CrawlerConfig -> AppConfig
+cfgToServices cfg = MkConfig (application cfg)
+                    [ fromConfig . Config.youtube  $ services cfg
+                    , fromConfig . Config.reddit   $ services cfg
+                    , fromConfig . Config.serie    $ services cfg
+                    , fromConfig . Config.anime    $ services cfg
+                    , fromConfig . Config.forecast $ services cfg
                     ]
 
 class (Provide a) => FromConfig a where
@@ -59,18 +72,18 @@ instance FromConfig S.Forecast where
     fromConfig (Config.Forecast ins) = S.ForecastS . S.MkForecast $ S.MkContext (UnixTime 0 0) ins []
 
 
-load :: IO [Service Any]
+load :: IO (Maybe AppConfig)
 load = do
       cfg <-  runMaybeT extractConfig
       case cfg of
-        Just config -> return $ cfgToServices config
+        Just config -> return . Just $ cfgToServices config
 
         Nothing     -> do
                        putStrLn "############################################################"
                        putStrLn "#############       Config file not found     ##############"
                        putStrLn "######### Please add one at ~/.config/crawler.rc  ##########"
                        putStrLn "############################################################"
-                       return []
+                       return Nothing
 
     where
         extractConfig :: MaybeT IO CrawlerConfig

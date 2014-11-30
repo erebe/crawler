@@ -117,8 +117,8 @@ dispatch action service = case action of
 
 
 
-runServer ::  MVar [Service Any] -> IO ()
-runServer queue = scotty 8086 $ do
+runServer ::  MVar [Service Any] -> Int -> IO ()
+runServer queue port = scotty port $ do
     get "/api/:type/:val" $ do
         service   <- param "type" :: ActionM String
         action    <- param "val"  :: ActionM String

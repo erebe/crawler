@@ -18,8 +18,14 @@ import           Control.Monad                   (forM, forever)
 import           Data.Maybe
 
 main :: IO ()
-main = spawnFetcher >>= RestAPI.runServer
+main = do
+    config <- Config.load
+    let app = flip fmap config $ \cfg -> do
+                let listenOn = Config.listenOn . Config.app $ cfg
+                spawnFetcher >>= flip RestAPI.runServer listenOn
 
+    fromMaybe (return ()) app
+    
 
 spawnFetcher :: IO (MVar [Service Any])
 spawnFetcher = do
@@ -33,7 +39,8 @@ spawnFetcher = do
             getLocalTime          = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
 
             fetcher queue = forever $ do
-                    services <- Config.load
+                    config <- Config.load
+                    let services = fromMaybe [] (Config.subscriptions <$> config)
 
                     putStrLn "---------------------------------------------------"
                     putStrLn . ("Start fetching :: " ++ ) . show =<< getLocalTime
