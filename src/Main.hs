@@ -25,7 +25,7 @@ main = do
                 spawnFetcher >>= flip RestAPI.runServer listenOn
 
     fromMaybe (return ()) app
-    
+
 
 spawnFetcher :: IO (MVar [Service Any])
 spawnFetcher = do

@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Config (load, AppConfig, app, subscriptions, listenOn) where
 
@@ -39,15 +40,25 @@ data AppConfig = MkConfig {
 
 
 cfgToServices :: CrawlerConfig -> AppConfig
-cfgToServices cfg = MkConfig (application cfg)
-                    [ fromConfig . Config.youtube  $ services cfg
-                    , fromConfig . Config.reddit   $ services cfg
-                    , fromConfig . Config.serie    $ services cfg
-                    , fromConfig . Config.anime    $ services cfg
-                    , fromConfig . Config.forecast $ services cfg
+cfgToServices Config {..} = MkConfig application
+                    [ fromConfig . Config.youtube  $ services
+                    , fromConfig . Config.reddit   $ services
+                    , fromConfig . Config.serie    $ services
+                    , fromConfig . Config.anime    $ services
+                    , fromConfig . Config.forecast $ services
                     ]
 
-class (Provide a) => FromConfig a where
+defaultConfig :: CrawlerConfig
+defaultConfig =  Config {  application = Application { listenOn = 8000 }
+                         , services    = Services { youtube  = Config.Youtube []
+                                                  , reddit   = Config.Reddit []
+                                                  , serie    = Config.Serie []
+                                                  , anime    = Config.Anime []
+                                                  , forecast = Config.Forecast []
+                                                  }
+                        }
+
+class FromConfig (a :: S.ServiceKind) where
     data Config a
     fromConfig :: Config a -> Service Any
 
@@ -79,10 +90,13 @@ load = do
         Just config -> return . Just $ cfgToServices config
 
         Nothing     -> do
-                       putStrLn "############################################################"
-                       putStrLn "#############       Config file not found     ##############"
-                       putStrLn "######### Please add one at ~/.config/crawler.rc  ##########"
-                       putStrLn "############################################################"
+                       putStrLn "#########################################################################"
+                       putStrLn "#############       Config file not found or Parse Error   ##############"
+                       putStrLn "#############     Please add one at ~/.config/crawler.rc   ##############"
+                       putStrLn "########################################################################"
+                       putStrLn "#############              Here a default one              #############"
+                       print defaultConfig
+                       putStrLn "########################################################################"
                        return Nothing
 
     where

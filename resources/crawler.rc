@@ -1,5 +1,12 @@
-[
-    ("video", ["joueurdugrenier", "languedepub2", "AsapSCIENCE", "DanyCaligula", "pbsideachannel", "faireset2", "deadwattsofficiel", "minutephysics"])
-   ,("serie", ["grimm", "vikings", "supernatural", "helix", "game of thrones", "revolution", "the walking dead"])
-   ,("meteo", ["valbonne,fr", "guethary,fr"])
-]
+Config {
+    application = Application {
+        listenOn = 8086
+    }
+    , services = Services {
+        youtube = Youtube [ "hearthstonefr", "trolden1337", "hsepicplays",  "joueurdugrenier" ]
+      , reddit = Reddit ["programming", "haskell", "unixporn"]
+      , serie = Serie [ "constantine", "the Flash", "grimm", "The big bang theory", "supernatural", "helix"]
+      , anime = Anime ["613", "676", "703"]
+      , forecast = Forecast ["valbonne,fr", "guethary,fr", "lyon,fr"]
+    }
+}
