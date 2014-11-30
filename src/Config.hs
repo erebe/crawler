@@ -2,7 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Config (load, AppConfig, app, subscriptions, listenOn) where
+module Config (load, AppConfig, app, subscriptions, listenOn, updateFrequencyInMin) where
 
 import           Service              as S
 
@@ -17,7 +17,8 @@ import           Text.Read                 (readMaybe)
 import           Data.UnixTime
 
 data Application = Application {
-     listenOn :: Int
+      listenOn :: Int
+    , updateFrequencyInMin :: Int
     } deriving (Show, Read)
 
 data Services = Services {
@@ -49,13 +50,13 @@ cfgToServices Config {..} = MkConfig application
                     ]
 
 defaultConfig :: CrawlerConfig
-defaultConfig =  Config {  application = Application { listenOn = 8000 }
-                         , services    = Services { youtube  = Config.Youtube []
-                                                  , reddit   = Config.Reddit []
-                                                  , serie    = Config.Serie []
-                                                  , anime    = Config.Anime []
-                                                  , forecast = Config.Forecast []
-                                                  }
+defaultConfig =  Config { application = Application { listenOn = 8000, updateFrequencyInMin = 60 }
+                        , services    = Services { youtube  = Config.Youtube []
+                                                 , reddit   = Config.Reddit []
+                                                 , serie    = Config.Serie []
+                                                 , anime    = Config.Anime []
+                                                 , forecast = Config.Forecast []
+                                                 }
                         }
 
 class FromConfig (a :: S.ServiceKind) where

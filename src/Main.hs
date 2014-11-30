@@ -14,39 +14,42 @@ import           Control.Concurrent.Thread.Delay (delay)
 import           Data.Time
 import           System.Timeout
 
-import           Control.Monad                   (forM, forever)
+import           Control.Arrow                   ((&&&))
+import           Control.Monad                   (forM, forever, guard)
 import           Data.Maybe
 
 main :: IO ()
 main = do
-    config <- Config.load
-    let app = flip fmap config $ \cfg -> do
-                let listenOn = Config.listenOn . Config.app $ cfg
-                spawnFetcher >>= flip RestAPI.runServer listenOn
+    config' <- Config.load
+    guard (isJust config')
+    let config = fromJust config'
+    
+    let listenOn = Config.listenOn . Config.app $ config
+    spawnCrawler >>= flip RestAPI.runServer listenOn
 
-    fromMaybe (return ()) app
 
-
-spawnFetcher :: IO (MVar [Service Any])
-spawnFetcher = do
-        fetchRes <- newMVar []
-        _ <- async $ fetcher fetchRes
-        return fetchRes
+spawnCrawler :: IO (MVar [Service Any])
+spawnCrawler = do
+        resultChannel <- newMVar []
+        _ <- async $ crawler resultChannel
+        return resultChannel
 
         where
             timeoutAfterMin nbMin = let micro = (6 :: Int) in timeout (10^micro * 60 * nbMin)
-            rescheduleInOneHour   = delay (1000000 * 60 * 60)
+            rescheduleIn duration = delay (1000000 * 60 * duration)
             getLocalTime          = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
+            extract config = fromMaybe ([], 60)
+                             ((Config.subscriptions &&& toInteger . Config.updateFrequencyInMin . Config.app)
+                                <$> config
+                             )
 
-            fetcher queue = forever $ do
-                    config <- Config.load
-                    let services = fromMaybe [] (Config.subscriptions <$> config)
+            crawler queue = forever $ do
+                    (services, updateFrequency) <- extract <$> Config.load
 
                     putStrLn "---------------------------------------------------"
                     putStrLn . ("Start fetching :: " ++ ) . show =<< getLocalTime
 
 
-                    --TODO use Arrow
                     handles <- forM services (async . timeoutAfterMin 10 . fetch)
                     services' <- forM handles wait
                     let ret =  uncurry fromMaybe <$> zip services services'
@@ -55,5 +58,5 @@ spawnFetcher = do
                     putStrLn . ("Done fetching :: " ++ ) . show =<< getLocalTime
                     putStrLn "---------------------------------------------------"
 
-                    rescheduleInOneHour
+                    rescheduleIn updateFrequency
 
