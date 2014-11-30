@@ -182,7 +182,7 @@ function generateWeatherView(cityName, forecast) {
     header.click(function(event) {
         event.preventDefault();
         $(".cd-panel-header-title").html(cityName);
-        callAjax("/api/meteo/" + cityName, function(data) {
+        callAjax("/api/forecast/" + cityName, function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadWeather(data, panel);
@@ -293,7 +293,7 @@ function generateVideoView(channelName, video)
     header.click(function(event) {
         event.preventDefault();
         $(".cd-panel-header-title").html(channelName);
-        callAjax("/api/video/" + channelName, function(data) {
+        callAjax("/api/youtube/" + channelName, function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadVideos(data, panel);
@@ -309,6 +309,7 @@ function generateVideoView(channelName, video)
 
 function callAjax(url, callback)
 {
+    var url = encodeURI(url);
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function(){
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
