@@ -25,11 +25,13 @@ import           Network.HTTP.Types.Status (ok200)
 import           Web.Scotty
 
 import qualified Data.Text                 as T
+import           Data.Char
 
 import           Data.Aeson                hiding (json)
 import           Data.Aeson.TH
 
 import           Data.List
+
 
 
 import           Data.UnixTime
@@ -83,47 +85,47 @@ instance APIVerb Service.Any where
 instance APIVerb Service.Youtube where
     listA (MkYoutube ctx)        = json $ outputs ctx^..traverse.Youtube.name
     lastA (MkYoutube ctx)        = json  [channel & Youtube.videos .~ take 1 (channel^.Youtube.videos) | channel <- outputs ctx]
-    findA toFind (MkYoutube ctx) = json $ outputs ctx^..traversed.filtered (\channel -> toFind `isInfixOf` (channel^.Youtube.name))
+    findA toFind (MkYoutube ctx) = json $ outputs ctx^..traversed.filtered (\channel -> toFind `isInfixOf` (toUpper <$> channel^.Youtube.name))
 
 instance APIVerb Service.Serie where
     listA (MkSerie ctx)        = json $ outputs ctx^..traverse.Serie.name
     lastA (MkSerie ctx)        = json [serie & Serie.episodes .~ take 1 (serie^.Serie.episodes) | serie <- outputs ctx]
-    findA toFind (MkSerie ctx) = json $ outputs ctx^..traversed.filtered (\serie -> toFind `isInfixOf` (serie^.Serie.name))
+    findA toFind (MkSerie ctx) = json $ outputs ctx^..traversed.filtered (\serie -> toFind `isInfixOf` (toUpper <$> serie^.Serie.name))
 
 instance APIVerb Service.Anime where
     listA (MkAnime ctx)        = json $ outputs ctx^..traverse.Anime.name
     lastA (MkAnime ctx)        = json [ anime & Anime.episodes .~ take 1 (anime^.Anime.episodes) | anime <- outputs ctx]
-    findA toFind (MkAnime ctx) = json $ outputs ctx^..traversed.filtered (\anime -> toFind `isInfixOf` (anime^.Anime.name))
+    findA toFind (MkAnime ctx) = json $ outputs ctx^..traversed.filtered (\anime -> toFind `isInfixOf` (toUpper <$> anime^.Anime.name))
 
 instance APIVerb Service.Reddit where
     listA (MkReddit ctx)        = json $ outputs ctx^..traverse.Reddit.name
     lastA (MkReddit ctx)        = json [ reddit & Reddit.topics .~ take 25 (reddit^.Reddit.topics) | reddit <- outputs ctx ]
-    findA toFind (MkReddit ctx) = json $ outputs ctx^..traversed.filtered (\reddit -> toFind `isInfixOf` (reddit^.Reddit.name))
+    findA toFind (MkReddit ctx) = json $ outputs ctx^..traversed.filtered (\reddit -> toFind `isInfixOf` (toUpper <$> reddit^.Reddit.name))
 
 instance APIVerb Service.Forecast where
     listA (MkForecast ctx)        = json $ Weather.city <$> outputs ctx
     lastA (MkForecast ctx)        = json [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- outputs ctx]
     findA toFind (MkForecast ctx) = json [ city | city <- outputs ctx, T.toLower (T.pack toFind)
                                                                                         `T.isInfixOf`
-                                                                                          T.toLower (Weather.city city)]
+                                                                                          T.toUpper (Weather.city city)]
 
 dispatch :: APIVerb a => String -> Service a ->  ActionM ()
 dispatch action service = case action of
                                "list" -> listA service
                                "last" -> lastA service
                                ""     -> lastA service
-                               _      -> findA action service
+                               _      -> findA (toUpper <$> action) service
 
 
 
 
 runServer ::  MVar [Service Any] -> Int -> IO ()
 runServer queue port = scotty port $ do
-    get "/api/:type/:val" $ do
-        service   <- param "type" :: ActionM String
-        action    <- param "val"  :: ActionM String
-        services  <- liftIO $ readMVar queue
 
+    get (regex "^/api/([^/]+)/(.*)$") $ do
+        service   <- param "1" :: ActionM String
+        action    <- param "2"  :: ActionM String
+        services  <- liftIO $ readMVar queue
         let requestResult = dispatch action <$> find ((service ==) . name) services
 
         fromMaybe next requestResult

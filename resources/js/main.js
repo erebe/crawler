@@ -182,7 +182,7 @@ function generateWeatherView(cityName, forecast) {
     header.click(function(event) {
         event.preventDefault();
         $(".cd-panel-header-title").html(cityName);
-        callAjax("/api/forecast/" + cityName, function(data) {
+        callAjax("/api/forecast/" + encodeURIComponent(cityName), function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadWeather(data, panel);
@@ -220,7 +220,7 @@ function generateAnimeView(anime, episode)
     header.click(function(event) {
         event.preventDefault();
         $(".cd-panel-header-title").html(anime.name);
-        callAjax("/api/anime/" + anime.name, function(data) {
+        callAjax("/api/anime/" + encodeURIComponent(anime.name), function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadAnimes(data, panel);
@@ -253,7 +253,7 @@ function generateSerieView(serieName, episode)
     header.click(function(event) {
         event.preventDefault();
         $(".cd-panel-header-title").html(serieName);
-        callAjax("/api/serie/" + serieName, function(data) {
+        callAjax("/api/serie/" + encodeURIComponent(serieName), function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadSeries(data, panel);
@@ -293,7 +293,7 @@ function generateVideoView(channelName, video)
     header.click(function(event) {
         event.preventDefault();
         $(".cd-panel-header-title").html(channelName);
-        callAjax("/api/youtube/" + channelName, function(data) {
+        callAjax("/api/youtube/" + encodeURIComponent(channelName), function(data) {
             var panel = $(".cd-panel-content");
             panel.empty();
             loadVideos(data, panel);
@@ -309,7 +309,7 @@ function generateVideoView(channelName, video)
 
 function callAjax(url, callback)
 {
-    var url = encodeURI(url);
+    var url = url;
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function(){
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
