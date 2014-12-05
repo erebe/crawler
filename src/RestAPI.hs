@@ -105,9 +105,7 @@ instance APIVerb Service.Reddit where
 instance APIVerb Service.Forecast where
     listA (MkForecast ctx)        = json $ Weather.city <$> outputs ctx
     lastA (MkForecast ctx)        = json [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- outputs ctx]
-    findA toFind (MkForecast ctx) = json [ city | city <- outputs ctx, T.toLower (T.pack toFind)
-                                                                                        `T.isInfixOf`
-                                                                                          T.toUpper (Weather.city city)]
+    findA toFind (MkForecast ctx) = json [ city | city <- outputs ctx, T.pack toFind `T.isInfixOf` T.toUpper (Weather.city city)]
 
 dispatch :: APIVerb a => String -> Service a ->  ActionM ()
 dispatch action service = case action of
@@ -122,7 +120,7 @@ dispatch action service = case action of
 runServer ::  MVar [Service Any] -> Int -> IO ()
 runServer queue port = scotty port $ do
 
-    get (regex "^/api/([^/]+)/(.*)$") $ do
+    get (regex "^/api/([^/]+)/(.*)") $ do
         service   <- param "1" :: ActionM String
         action    <- param "2"  :: ActionM String
         services  <- liftIO $ readMVar queue
