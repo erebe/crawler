@@ -1,18 +1,16 @@
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Youtube ( Video()
                , videos, name
                , Channel()
                , title, url, thumbnail, date
-               , fetchChannels
+               , fetch
                ) where
 
 import           Http(getPages)
 
 import qualified Data.ByteString.Lazy       as BL
-import qualified Data.ByteString.Char8      as BC
 
 import           Control.Applicative
 import           Data.Maybe
@@ -22,21 +20,20 @@ import           Control.Lens
 import           Data.UnixTime
 
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 
 import Data.Aeson
 import Data.Aeson.Types
 import Control.Monad(forM, join)
 
 data Video = Video { _title     :: T.Text
-                    ,_url       :: String
-                    ,_thumbnail :: String
-                    ,_date      :: String
-
+                   , _url       :: T.Text
+                   , _thumbnail :: T.Text
+                   , _date      :: T.Text
                    } deriving (Show, Read)
 
-data Channel = Channel { _name   :: String
-                        ,_videos :: [Video]
-
+data Channel = Channel { _name   :: T.Text
+                       , _videos :: [Video]
                        } deriving (Show, Read)
 
 
@@ -64,15 +61,15 @@ decodeAPI string = do
                               <*> (toSeconds <$> (item .: "updated"))
 
     where
-        format vidID = "https://www.youtube.com/v/" ++ vidID ++ "?vq=hd720"
-        toSeconds timeStr =  show . utSeconds $ parseUnixTime (BC.pack "%FT%X") (BC.pack timeStr)
+        format vidID = "https://www.youtube.com/v/" `T.append` vidID `T.append` "?vq=hd720"
+        toSeconds timeStr =  T.pack . show . utSeconds $ parseUnixTime "%FT%X" (T.encodeUtf8 timeStr)
 
-fetchChannels :: [String] -> IO [Channel]
-fetchChannels channelsName = do
+fetch :: [String] -> IO [Channel]
+fetch channelsName = do
     youtubeVideos <- getPages decodeAPI (getChannelURL <$> channelsName)
 
-    let channels =  flip fmap (zip channelsName youtubeVideos) $ \(chName, vids) ->
-                       Channel chName (fromMaybe [] (join vids))
+    let channels = zipWith (\chName vids -> Channel (T.pack chName) (fromMaybe [] (join vids)))
+                           channelsName youtubeVideos
 
     return channels
 

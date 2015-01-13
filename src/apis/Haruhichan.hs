@@ -1,12 +1,11 @@
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Haruhichan ( Episode()
                   , title, magnetURI, date
                   , Anime()
                   , name, thumbnail, episodes
-                  , fetchAnimes
+                  , fetch
                   ) where
 
 
@@ -26,17 +25,15 @@ import Data.Aeson.Types
 import Control.Monad(forM, join)
 
 
-data Episode = Episode { _title :: T.Text
-                        ,_magnetURI :: String
-                        ,_date :: String
-
+data Episode = Episode { _title     :: T.Text
+                       , _magnetURI :: T.Text
+                       , _date      :: T.Text
                        } deriving (Show)
 
 
-data Anime = Anime { _name      :: String
-                    , _thumbnail :: String
-                    , _episodes  :: [Episode]
-
+data Anime = Anime { _name      :: T.Text
+                   , _thumbnail :: T.Text
+                   , _episodes  :: [Episode]
                    } deriving (Show)
 
 $(makeLenses ''Episode)
@@ -68,8 +65,8 @@ decodeAPI js = do
 
 
 
-fetchAnimes :: [String] -> IO [Anime]
-fetchAnimes animeIds = do
+fetch :: [String] -> IO [Anime]
+fetch animeIds = do
     animes <- getPages decodeAPI (getAnimeURL <$> animeIds)
 
     return $ catMaybes (join <$> animes)

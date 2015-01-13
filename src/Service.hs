@@ -16,7 +16,8 @@ module Service
                     -- )
                     where
 
-import qualified Eztv
+-- import qualified Eztv
+import qualified ShowRss
 import qualified Haruhichan
 import qualified OpenWeather
 import qualified Reddit
@@ -37,7 +38,7 @@ data ServiceKind = Youtube | Serie | Anime | Reddit | Forecast | Any
 
 data family Service (a :: ServiceKind)
 data instance Service Youtube  = MkYoutube (Context String Youtube.Channel)      deriving (Show)
-data instance Service Serie    = MkSerie (Context String Eztv.Serie)             deriving (Show)
+data instance Service Serie    = MkSerie (Context String ShowRss.Serie)             deriving (Show)
 data instance Service Anime    = MkAnime (Context String Haruhichan.Anime)       deriving (Show)
 data instance Service Reddit   = MkReddit (Context String Reddit.Reddit)         deriving (Show)
 data instance Service Forecast = MkForecast (Context String OpenWeather.Weather) deriving (Show)
@@ -75,28 +76,28 @@ instance Provide Any where
 instance Provide Youtube where
     name _ = "youtube"
     fetch (MkYoutube ctx) = do
-                out <- Youtube.fetchChannels (inputs ctx)
+                out <- Youtube.fetch (inputs ctx)
                 time <- getUnixTime
                 return $ MkYoutube ctx { lastUpdate = time, outputs = out }
 
 instance Provide Serie where
     name _ = "serie"
     fetch (MkSerie ctx) = do
-                out <- Eztv.fetchSeries (inputs ctx)
+                out <- ShowRss.fetch (inputs ctx)
                 time <- getUnixTime
                 return $ MkSerie ctx { lastUpdate = time, outputs = out }
 
 instance Provide Anime where
     name _ = "anime"
     fetch (MkAnime ctx) = do
-                out <- Haruhichan.fetchAnimes (inputs ctx)
+                out <- Haruhichan.fetch (inputs ctx)
                 time <- getUnixTime
                 return $ MkAnime ctx { lastUpdate = time, outputs = out }
 
 instance Provide Reddit where
     name _ = "reddit"
     fetch (MkReddit ctx) = do
-                out <- Reddit.fetchSubReddit (inputs ctx)
+                out <- Reddit.fetch (inputs ctx)
                 time <- getUnixTime
                 return $ MkReddit ctx { lastUpdate = time, outputs = out }
 
@@ -104,7 +105,7 @@ instance Provide Reddit where
 instance Provide Forecast where
     name _ = "forecast"
     fetch (MkForecast ctx) = do
-                out <- OpenWeather.fetchWeathers (inputs ctx)
+                out <- OpenWeather.fetch (inputs ctx)
                 time <- getUnixTime
                 return $ MkForecast ctx { lastUpdate = time, outputs = out }
 

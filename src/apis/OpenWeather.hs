@@ -4,7 +4,7 @@
 
 module OpenWeather ( Forecast(Forecast, date, temperature, description, iconUrl)
                    , Weather(Weather, city, forecasts)
-                   , fetchWeathers
+                   , fetch
                    ) where
 
 import           Control.Applicative
@@ -66,8 +66,8 @@ parseJsonApi jsonStr =  do
         return $ Weather cityName t
 
 
-fetchWeathers :: [String] -> IO [Weather]
-fetchWeathers cities = do
+fetch :: [String] -> IO [Weather]
+fetch cities = do
     pages <- getPages parseJsonApi (buildWeatherApiUrl <$> cities)
 
     return $ catMaybes (join <$> pages)

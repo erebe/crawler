@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+--TODO refine export
 
 module Reddit where
 
@@ -21,18 +21,16 @@ import Data.Aeson.Types
 import Control.Monad(forM, join)
 
 
-data Topic = Topic { _title :: T.Text
-                   , _url :: String
-                   , _commentLink :: String
-                   , _thumbnail :: String
-                   , _date :: Integer
+data Topic = Topic { _title       :: T.Text
+                   , _url         :: T.Text
+                   , _commentLink :: T.Text
+                   , _thumbnail   :: T.Text
+                   , _date        :: Integer
                    , _numComments :: Integer
-
                    } deriving (Show)
 
-data Reddit = Reddit { _name :: String
+data Reddit = Reddit { _name   :: T.Text
                      , _topics :: [Topic]
-
                      } deriving (Show)
 
 
@@ -58,14 +56,14 @@ decodeAPI js = do
             topic <- container .: "data"
             Topic <$> topic .: "title"
                   <*> topic .: "url"
-                  <*> (("https://www.reddit.com" ++ ) <$> topic .: "permalink")
+                  <*> (("https://www.reddit.com" `T.append`) <$> topic .: "permalink")
                   <*> topic .: "thumbnail"
                   <*> topic .: "created"
                   <*> topic .: "num_comments"
 
-fetchSubReddit :: [String] -> IO [Reddit]
-fetchSubReddit subRedditNames = do
+fetch :: [String] -> IO [Reddit]
+fetch subRedditNames = do
     reddits <- getPages decodeAPI (getSubRedditURL <$> subRedditNames)
-    return . catMaybes $ zipWith (\subName reddit -> (name.~ subName) <$> reddit)
+    return . catMaybes $ zipWith (\subName reddit -> (name.~ T.pack subName) <$> reddit)
                          subRedditNames (join <$> reddits)
 
