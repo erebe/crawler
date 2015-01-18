@@ -33,4 +33,4 @@ spawnServiceDaemon = do
 
       services <- updateServices (Config.subscriptions (fromJust cfg))
       _ <- swapMVar channel services
-      rescheduleIn 30
+      rescheduleIn . toInteger . Config.updateFrequencyInMin . Config.app $ fromJust cfg
