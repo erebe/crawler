@@ -1,10 +1,8 @@
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Config (load, AppConfig, app, subscriptions, listenOn, updateFrequencyInMin) where
+module Config where
 
-import           Service              as S
+import           Service                   as S
 
 import           Control.Applicative       ((<$>))
 import           Control.Monad             (guard)
@@ -14,75 +12,48 @@ import           Data.Maybe
 import           System.Directory          (doesFileExist, getHomeDirectory)
 import           Text.Read                 (readMaybe)
 
-import           Data.UnixTime
-
 data Application = Application {
-      listenOn :: Int
+      listenOn             :: Int
     , updateFrequencyInMin :: Int
     } deriving (Show, Read)
 
 data Services = Services {
-      youtube  :: Config S.Youtube
-    , reddit   :: Config S.Reddit
-    , serie    :: Config S.Serie
-    , anime    :: Config S.Anime
-    , forecast :: Config S.Forecast
+      youtube  :: [String]
+    , reddit   :: [String]
+    , serie    :: [String]
+    , anime    :: [String]
+    , forecast :: [String]
     } deriving (Show, Read)
 
 data CrawlerConfig = Config {
       application :: Application
-    , services :: Services
+    , services    :: Services
     } deriving (Show, Read)
 
 data AppConfig = MkConfig {
-      app :: Application
-    , subscriptions :: [Service Any]
-    } deriving (Show)
+      app           :: Application
+    , subscriptions :: [IO ServiceDTO]
+    }
 
 
 cfgToServices :: CrawlerConfig -> AppConfig
 cfgToServices Config {..} = MkConfig application
-                    [ fromConfig . Config.youtube  $ services
-                    , fromConfig . Config.reddit   $ services
-                    , fromConfig . Config.serie    $ services
-                    , fromConfig . Config.anime    $ services
-                    , fromConfig . Config.forecast $ services
+                    [ YoutubeDTO <$> (mkYoutube $ Config.youtube services)
+                    , RedditDTO <$> (mkReddit $ Config.reddit services)
+                    , SerieDTO <$> (mkSerie $ Config.serie services)
+                    , AnimeDTO <$> (mkAnime $ Config.anime services)
+                    , ForecastDTO <$> (mkForecast $ Config.forecast services)
                     ]
 
 defaultConfig :: CrawlerConfig
 defaultConfig =  Config { application = Application { listenOn = 8000, updateFrequencyInMin = 60 }
-                        , services    = Services { youtube  = Config.Youtube []
-                                                 , reddit   = Config.Reddit []
-                                                 , serie    = Config.Serie []
-                                                 , anime    = Config.Anime []
-                                                 , forecast = Config.Forecast []
+                        , services    = Services { youtube  = []
+                                                 , reddit   = []
+                                                 , serie    = []
+                                                 , anime    = []
+                                                 , forecast = []
                                                  }
                         }
-
-class FromConfig (a :: S.ServiceKind) where
-    data Config a
-    fromConfig :: Config a -> Service Any
-
-instance FromConfig S.Youtube where
-    data Config S.Youtube = Youtube [String] deriving (Show, Read)
-    fromConfig (Config.Youtube ins) = S.YoutubeS . S.MkYoutube $ S.MkContext (UnixTime 0 0) ins []
-
-instance FromConfig S.Serie where
-    data Config S.Serie = Serie [String] deriving (Show, Read)
-    fromConfig (Config.Serie ins) = S.SerieS . S.MkSerie $ S.MkContext (UnixTime 0 0) ins []
-
-instance FromConfig S.Reddit where
-    data Config S.Reddit = Reddit [String] deriving (Show, Read)
-    fromConfig (Config.Reddit ins) = S.RedditS . S.MkReddit $ S.MkContext (UnixTime 0 0) ins []
-
-instance FromConfig S.Anime where
-    data Config S.Anime = Anime [String] deriving (Show, Read)
-    fromConfig (Config.Anime ins) = S.AnimeS . S.MkAnime $ S.MkContext (UnixTime 0 0) ins []
-
-instance FromConfig S.Forecast where
-    data Config S.Forecast = Forecast [String] deriving (Show, Read)
-    fromConfig (Config.Forecast ins) = S.ForecastS . S.MkForecast $ S.MkContext (UnixTime 0 0) ins []
-
 
 load :: IO (Maybe AppConfig)
 load = do

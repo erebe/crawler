@@ -1,7 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE CPP               #-}
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE KindSignatures    #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
@@ -9,10 +7,10 @@ module RestAPI (runServer) where
 
 import           Service
 
-import qualified Eztv                      as Serie
 import qualified Haruhichan                as Anime
 import qualified OpenWeather               as Weather
 import qualified Reddit
+import qualified ShowRss                   as Serie
 import qualified Youtube
 
 import           Control.Applicative       ((<$>))
@@ -25,7 +23,6 @@ import           Network.HTTP.Types.Status (ok200)
 import           Web.Scotty
 
 import qualified Data.Text                 as T
-import           Data.Char
 
 import           Data.Aeson                hiding (json)
 import           Data.Aeson.TH
@@ -57,67 +54,87 @@ $(deriveToJSON JSON_OPTIONS ''Reddit.Reddit)
 #undef JSON_OPTIONS
 
 
-class APIVerb (a :: ServiceKind) where
-    listA :: Service a -> ActionM ()
-    lastA :: Service a -> ActionM ()
-    findA :: String -> Service a -> ActionM ()
+class APIVerb a where
+    name  :: a -> String
+    listA :: a -> ActionM ()
+    lastA :: a -> ActionM ()
+    findA :: T.Text -> a -> ActionM ()
 
-instance APIVerb Service.Any where
-    listA (YoutubeS dat)  = listA dat
-    listA (SerieS dat)    = listA dat
-    listA (AnimeS dat)    = listA dat
-    listA (RedditS dat)   = listA dat
-    listA (ForecastS dat) = listA dat
+instance APIVerb ServiceDTO where
+  name (YoutubeDTO dat)  = name dat
+  name (SerieDTO dat)    = name dat
+  name (AnimeDTO dat)    = name dat
+  name (RedditDTO dat)   = name dat
+  name (ForecastDTO dat) = name dat
 
-    lastA (YoutubeS dat)  = lastA dat
-    lastA (SerieS dat)    = lastA dat
-    lastA (AnimeS dat)    = lastA dat
-    lastA (RedditS dat)   = lastA dat
-    lastA (ForecastS dat) = lastA dat
+  listA (YoutubeDTO dat)  = listA dat
+  listA (SerieDTO dat)    = listA dat
+  listA (AnimeDTO dat)    = listA dat
+  listA (RedditDTO dat)   = listA dat
+  listA (ForecastDTO dat) = listA dat
 
-    findA arg (YoutubeS dat)  = findA arg dat
-    findA arg (SerieS dat)    = findA arg dat
-    findA arg (AnimeS dat)    = findA arg dat
-    findA arg (RedditS dat)   = findA arg dat
-    findA arg (ForecastS dat) = findA arg dat
+  lastA (YoutubeDTO dat)  = lastA dat
+  lastA (SerieDTO dat)    = lastA dat
+  lastA (AnimeDTO dat)    = lastA dat
+  lastA (RedditDTO dat)   = lastA dat
+  lastA (ForecastDTO dat) = lastA dat
+
+  findA arg (YoutubeDTO dat)  = findA arg dat
+  findA arg (SerieDTO dat)    = findA arg dat
+  findA arg (AnimeDTO dat)    = findA arg dat
+  findA arg (RedditDTO dat)   = findA arg dat
+  findA arg (ForecastDTO dat) = findA arg dat
 
 
-instance APIVerb Service.Youtube where
-    listA (MkYoutube ctx)        = json $ outputs ctx^..traverse.Youtube.name
-    lastA (MkYoutube ctx)        = json  [channel & Youtube.videos .~ take 1 (channel^.Youtube.videos) | channel <- outputs ctx]
-    findA toFind (MkYoutube ctx) = json $ outputs ctx^..traversed.filtered (\channel -> toFind `isInfixOf` (toUpper <$> channel^.Youtube.name))
+instance APIVerb Youtube where
+  name _ = "youtube"
+  listA (Youtube ctx) = json $ outputs ctx^..traverse.Youtube.name
+  lastA (Youtube ctx) = json  [channel & Youtube.videos .~ take 1 (channel^.Youtube.videos)
+                              | channel <- outputs ctx]
+  findA toFind (Youtube ctx) = json $ outputs ctx^..traversed.filtered
+                               (\channel -> toFind `T.isInfixOf` T.toUpper (channel^.Youtube.name))
 
-instance APIVerb Service.Serie where
-    listA (MkSerie ctx)        = json $ outputs ctx^..traverse.Serie.name
-    lastA (MkSerie ctx)        = json [serie & Serie.episodes .~ take 1 (serie^.Serie.episodes) | serie <- outputs ctx]
-    findA toFind (MkSerie ctx) = json $ outputs ctx^..traversed.filtered (\serie -> toFind `isInfixOf` (toUpper <$> serie^.Serie.name))
+instance APIVerb Serie where
+  name _ = "serie"
+  listA (Serie ctx) = json $ outputs ctx^..traverse.Serie.name
+  lastA (Serie ctx) = json [serie & Serie.episodes .~ take 1 (serie^.Serie.episodes)
+                           | serie <- outputs ctx]
+  findA toFind (Serie ctx) = json $ outputs ctx^..traversed.filtered
+                             (\serie -> toFind `T.isInfixOf` T.toUpper (serie^.Serie.name))
 
 instance APIVerb Service.Anime where
-    listA (MkAnime ctx)        = json $ outputs ctx^..traverse.Anime.name
-    lastA (MkAnime ctx)        = json [ anime & Anime.episodes .~ take 1 (anime^.Anime.episodes) | anime <- outputs ctx]
-    findA toFind (MkAnime ctx) = json $ outputs ctx^..traversed.filtered (\anime -> toFind `isInfixOf` (toUpper <$> anime^.Anime.name))
+  name _ = "anime"
+  listA (Anime ctx) = json $ outputs ctx^..traverse.Anime.name
+  lastA (Anime ctx) = json [anime & Anime.episodes .~ take 1 (anime^.Anime.episodes)
+                           | anime <- outputs ctx]
+  findA toFind (Anime ctx) = json $ outputs ctx^..traversed.filtered
+                             (\anime -> toFind `T.isInfixOf` T.toUpper (anime^.Anime.name))
 
 instance APIVerb Service.Reddit where
-    listA (MkReddit ctx)        = json $ outputs ctx^..traverse.Reddit.name
-    lastA (MkReddit ctx)        = json [ reddit & Reddit.topics .~ take 25 (reddit^.Reddit.topics) | reddit <- outputs ctx ]
-    findA toFind (MkReddit ctx) = json $ outputs ctx^..traversed.filtered (\reddit -> toFind `isInfixOf` (toUpper <$> reddit^.Reddit.name))
+  name _ = "reddit"
+  listA (Reddit ctx) = json $ outputs ctx^..traverse.Reddit.name
+  lastA (Reddit ctx) = json [reddit & Reddit.topics .~ take 25 (reddit^.Reddit.topics)
+                            | reddit <- outputs ctx]
+  findA toFind (Reddit ctx) = json $ outputs ctx^..traversed.filtered
+                              (\reddit -> toFind `T.isInfixOf` T.toUpper (reddit^.Reddit.name))
 
 instance APIVerb Service.Forecast where
-    listA (MkForecast ctx)        = json $ Weather.city <$> outputs ctx
-    lastA (MkForecast ctx)        = json [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city) | city <- outputs ctx]
-    findA toFind (MkForecast ctx) = json [ city | city <- outputs ctx, T.pack toFind `T.isInfixOf` T.toUpper (Weather.city city)]
+  name _ = "forecast"
+  listA (Forecast ctx) = json $ Weather.city <$> outputs ctx
+  lastA (Forecast ctx) = json [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city)
+                              | city <- outputs ctx]
+  findA toFind (Forecast ctx) = json [city | city <- outputs ctx
+                                , toFind `T.isInfixOf` T.toUpper (Weather.city city)]
 
-dispatch :: APIVerb a => String -> Service a ->  ActionM ()
+dispatch :: APIVerb a => String -> a ->  ActionM ()
 dispatch action service = case action of
                                "list" -> listA service
                                "last" -> lastA service
                                ""     -> lastA service
-                               _      -> findA (toUpper <$> action) service
+                               _      -> findA (T.toUpper . T.pack $ action) service
 
 
-
-
-runServer ::  MVar [Service Any] -> Int -> IO ()
+runServer ::  MVar [ServiceDTO] -> Int -> IO ()
 runServer queue port = scotty port $ do
 
     get (regex "^/api/([^/]+)/(.*)") $ do

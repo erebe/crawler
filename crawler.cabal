@@ -22,7 +22,7 @@ Executable          crawler
                         ,text, bytestring
                         ,time, unix-time
 
-Library
-    ghc-options:     -O3 -Wall
+--Library
+--    ghc-options:     -O3 -Wall
     --ghc-prof-options:-prof -fprof-auto -rtsopts
 
