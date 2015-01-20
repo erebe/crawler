@@ -1,0 +1,30 @@
+
+[application]
+listenOn = 8086
+updateFrequencyInMin = 30
+
+[services]
+youtube = [ "hearthstonefr", "trolden1337", "hsepicplays", "FirdornLP",  "joueurdugrenier"
+          , "languedepub2" , "AsapSCIENCE", "DanyCaligula", "pbsideachannel", "GoldenMoustacheVideo"
+          , "faireset2", "deadwattsofficiel", "minutephysics", "salutlesgeeks"
+          , "UnDropDansLaMare", "datagueule", "epenser1"
+          ]
+reddit = ["programming", "haskell", "unixporn", "programmerhumor"]
+serie  = [ "962" # "constantine"
+         , "849" # "the flash 2014"
+         , "403" # "grimm"
+         , "5"   # "the big bang theory"
+         , "62"  # "supernatural"
+         , "711" # "helix"
+         , "543" # "vikings"
+         , "350" # "game of thrones"
+         , "318" # "the walking dead"
+         , "584" # "under the dome" 
+         ]
+anime = ["613", "676", "703"]
+forecast = ["valbonne,fr", "guethary,fr", "lyon,fr"]
+
+
+
+
+   

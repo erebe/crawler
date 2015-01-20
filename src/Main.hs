@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import qualified Config
@@ -21,16 +23,16 @@ main = do
 
 spawnServiceDaemon :: IO (MVar [ServiceDTO])
 spawnServiceDaemon = do
-  channel <- newMVar []
-  _ <- async $ runDaemon channel
-  return channel
+    channel <- newMVar []
+    _ <- async $ runDaemon channel
+    return channel
 
   where
     rescheduleIn duration = delay (1000000 * 60 * duration)
     runDaemon channel = forever $ do
-      cfg <- Config.load
-      guard (isJust cfg)
+        cfg <- Config.load
+        guard (isJust cfg)
 
-      services <- updateServices (Config.subscriptions (fromJust cfg))
-      _ <- swapMVar channel services
-      rescheduleIn . toInteger . Config.updateFrequencyInMin . Config.app $ fromJust cfg
+        services <- updateServices (Config.subscriptions (fromJust cfg))
+        _ <- swapMVar channel services
+        rescheduleIn . toInteger . Config.updateFrequencyInMin . Config.app $ fromJust cfg
