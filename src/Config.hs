@@ -20,8 +20,9 @@ instance FromJSON Config where
     parseJSON (Object v) = do
         appObj <- v .: "application"
         app' <- Application
-                <$> appObj .: "listenOn"
-                <*> appObj .: "updateFrequencyInMin"
+                <$> appObj .:? "listenOn" .!= 8080
+                <*> appObj .:? "updateFrequencyInMin" .!= 30
+                <*> appObj .:? "homepagePath" .!= "thirdparty/homepage/"
         servicesObj <- v .: "services"
 
         let servicesNames = ["youtube", "reddit", "serie", "anime", "forecast"]
@@ -45,6 +46,7 @@ instance FromJSON Config where
 data Application = Application {
       listenOn             :: Int
     , updateFrequencyInMin :: Int
+    , homepagePath         :: String
     } deriving (Show, Read)
 
 data Config = MkConfig {

@@ -149,13 +149,13 @@ runServer queue port = scotty port $ do
     get "/assets/:folder/:file" $ do
         folderName <- param "folder" :: ActionM String
         fileName   <- param "file"   :: ActionM String
-        file ("resources/" ++ folderName ++ "/" ++ fileName)
+        file ("thirdparty/homepage/" ++ folderName ++ "/" ++ fileName)
 
 
     notFound $ do
         status ok200
         setHeader "Content-type" "text/html; charset=utf-8"
-        file "resources/index.html"
+        file "thirdparty/homepage/index.html"
 
 
 
