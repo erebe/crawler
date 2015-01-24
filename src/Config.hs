@@ -33,7 +33,7 @@ instance FromJSON Config where
                                ]
 
         services' <- forM (zip servicesBuilders servicesNames) $
-                    \(builder, ins) -> fmap builder (servicesObj .: ins)
+                    \(builder, ins) -> fmap builder (servicesObj .:? ins .!= [])
 
 
         return $ MkConfig app' services'
