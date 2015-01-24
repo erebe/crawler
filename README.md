@@ -9,10 +9,11 @@ with nginx to offer an API from my server
 I use firefox and a custom greasemonkey script to prettify the API :)
 
 - What to expect:
-    - track torrents (from eztv)
+    - track torrents (from eztv or ShowRss)
     - track Youtube channel
     - track SubReddit
     - track weather (from openweathermap)
+    - track anime (from haruhichan)
 
 - What to expect next: (maybe)
     - tracking of looking for group
