@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE CPP                  #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE TemplateHaskell      #-}
@@ -38,22 +37,20 @@ import           Data.UnixTime
 instance ToJSON UnixTime where
     toJSON = toJSON . show . utSeconds
 
-#define JSON_OPTIONS defaultOptions {fieldLabelModifier = dropWhile (== '_')}
-$(deriveToJSON JSON_OPTIONS ''Weather.Forecast)
-$(deriveToJSON JSON_OPTIONS ''Weather.Weather)
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Weather.Forecast)
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Weather.Weather)
 
-$(deriveToJSON JSON_OPTIONS ''Serie.Episode)
-$(deriveToJSON JSON_OPTIONS ''Serie.Serie)
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Serie.Episode)
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Serie.Serie)
 
-$(deriveToJSON JSON_OPTIONS ''Youtube.Video)
-$(deriveToJSON JSON_OPTIONS ''Youtube.Channel)
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Youtube.Video)
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Youtube.Channel)
 
-$(deriveToJSON JSON_OPTIONS ''Anime.Episode)
-$(deriveToJSON JSON_OPTIONS ''Anime.Anime)
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Anime.Episode)
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Anime.Anime)
 
-$(deriveToJSON JSON_OPTIONS ''Reddit.Topic)
-$(deriveToJSON JSON_OPTIONS ''Reddit.Reddit)
-#undef JSON_OPTIONS
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Reddit.Topic)
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Reddit.Reddit)
 
 
 class APIVerb a where
@@ -158,6 +155,5 @@ runServer queue port = scotty port $ do
         status ok200
         setHeader "Content-type" "text/html; charset=utf-8"
         file "thirdparty/homepage/index.html"
-
 
 
