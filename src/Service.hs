@@ -1,5 +1,16 @@
+{-# LANGUAGE DataKinds      #-}
+{-# LANGUAGE KindSignatures #-}
 
-module Service where
+module Service
+       -- ( mkYoutube
+       --         , mkReddit
+       --         , mkSerie
+       --         , mkAnime
+       --         , mkForecast
+       --         , Service, lastUpdate, inputs, outputs
+       --         , Youtube, Reddit, Serie, Anime, Forecast
+       --         )
+       where
 
 -- import qualified Eztv
 import qualified Haruhichan
@@ -18,7 +29,8 @@ import           Control.Applicative      ((<$>), (<*>))
 import           Control.Monad            (forM)
 import           Data.Maybe               (catMaybes)
 
-data Service input output = MkService {
+data ServiceKind =  YoutubeT | RedditT | SerieT | AnimeT | ForecastT
+data Service (serviceType :: ServiceKind) input output = MkService {
                 lastUpdate :: UnixTime
                ,inputs     :: [input]
                ,outputs    :: [output]
@@ -26,11 +38,11 @@ data Service input output = MkService {
             } deriving (Show)
 
 
-newtype Youtube  = Youtube (Service String Youtube.Channel)
-newtype Reddit   = Reddit (Service String Reddit.Reddit)
-newtype Serie    = Serie (Service String ShowRss.Serie)
-newtype Anime    = Anime (Service String Haruhichan.Anime)
-newtype Forecast = Forecast (Service String OpenWeather.Weather)
+type Youtube  = Service YoutubeT String Youtube.Channel
+type Reddit   = Service RedditT String Reddit.Reddit
+type Serie    = Service SerieT String ShowRss.Serie
+type Anime    = Service AnimeT String Haruhichan.Anime
+type Forecast = Service ForecastT String OpenWeather.Weather
 
 data ServiceDTO = YoutubeDTO Youtube
                 | RedditDTO Reddit
@@ -39,21 +51,21 @@ data ServiceDTO = YoutubeDTO Youtube
                 | ForecastDTO Forecast
 
 mkYoutube :: [String] -> IO Youtube
-mkYoutube ins = Youtube <$> fetch ins Youtube.fetch
+mkYoutube ins = fetch ins Youtube.fetch
 
 mkReddit :: [String] -> IO Reddit
-mkReddit ins = Reddit <$> fetch ins Reddit.fetch
+mkReddit ins = fetch ins Reddit.fetch
 
 mkSerie :: [String] -> IO Serie
-mkSerie ins = Serie <$> fetch ins ShowRss.fetch
+mkSerie ins = fetch ins ShowRss.fetch
 
 mkAnime :: [String] -> IO Anime
-mkAnime ins = Anime <$> fetch ins Haruhichan.fetch
+mkAnime ins = fetch ins Haruhichan.fetch
 
 mkForecast :: [String] -> IO Forecast
-mkForecast ins = Forecast <$> fetch ins OpenWeather.fetch
+mkForecast ins = fetch ins OpenWeather.fetch
 
-fetch :: [input] -> ([input] -> IO [out]) -> IO (Service input out)
+fetch :: [input] -> ([input] -> IO [out]) -> IO (Service t input out)
 fetch ins fetcher = do
   out <- fetcher ins
   time <- getUnixTime
