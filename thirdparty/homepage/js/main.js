@@ -63,11 +63,11 @@ jQuery(document).ready(function($) {
 
 document.body.onload = function () {
 
-    callAjax("/api/youtube/", function(data) { loadVideos(data, $("#videos")); });
-    callAjax("/api/serie/", function(data) { loadSeries(data, $("#series")); });
-    callAjax("/api/anime/", function(data) { loadAnimes(data, $("#animes")); });
-    callAjax("/api/forecast/", function(data) { loadWeather(data, $("#weathers")); });
-    callAjax("/api/reddit/", function(data) { loadReddit(data, $("#reddits")); });
+    callAjax("/api/youtube/"	, function(data) { loadVideos(data, $("#videos")); });
+    callAjax("/api/serie/"	, function(data) { loadSeries(data, $("#series")); });
+    callAjax("/api/anime/"	, function(data) { loadAnimes(data, $("#animes")); });
+    callAjax("/api/forecast/"	, function(data) { loadWeather(data, $("#weathers")); });
+    callAjax("/api/reddit/"	, function(data) { loadReddit(data, $("#reddits")); });
 
 };
 
@@ -76,8 +76,11 @@ function loadReddit(data, container)
     var json = JSON.parse(data);
     var subs = json.filter(function(sub) { return sub.topics.length; } )
                    .map(function(sub) {
-                        var table = $("<table class='item reddit-item'><thead><tr><th><h1>"+ sub.name +"</h1></th></tr></thead></table>");
-                        return table.append.apply( table, sub.topics.map(function(topic) {
+                       var table = $("<table class='item reddit-item'><thead><tr><th>"
+				    + "<h1><a href='https://reddit.com/r/" + sub.name + "'>"+ sub.name +"</a></h1>"
+				    + "</th></tr></thead></table>"
+				    );
+                        return table.append.apply(table, sub.topics.map(function(topic) {
                             return generateRedditView(sub.name, topic); }));
                      });
 
