@@ -150,6 +150,9 @@ runServer queue port = scotty port $ do
         fileName   <- param "file"   :: ActionM String
         file ("thirdparty/homepage/" ++ folderName ++ "/" ++ fileName)
 
+    get "/favicon.ico" $ do
+        file ("thirdparty/homepage/favicon.ico")
+
 
     notFound $ do
         status ok200
