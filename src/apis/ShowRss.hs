@@ -1,5 +1,4 @@
 {-# LANGUAGE TemplateHaskell #-}
--- {-# LANGUAGE OverloadedStrings #-}
 
 module ShowRss ( Serie()
                , name, episodes
@@ -13,7 +12,7 @@ import           Http(getPages)
 import qualified Data.ByteString.Lazy as BL
 
 import           Text.HTML.TagSoup
-import           Control.Applicative
+
 import           Control.Monad
 import           Data.Maybe
 

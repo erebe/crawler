@@ -7,7 +7,7 @@ module OpenWeather ( Forecast(Forecast, date, temperature, description, iconUrl)
                    , fetch
                    ) where
 
-import           Control.Applicative
+
 
 import           Http(getPages)
 

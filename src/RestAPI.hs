@@ -14,7 +14,6 @@ import qualified Reddit
 import qualified ShowRss                   as Serie
 import qualified Youtube
 
-import           Control.Applicative       ((<$>))
 import           Control.Concurrent.MVar   (MVar, readMVar)
 import           Data.Maybe
 

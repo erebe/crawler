@@ -13,7 +13,7 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BLC
 
 import           Text.HTML.TagSoup
-import           Control.Applicative
+
 import           Control.Monad
 import           Data.Maybe
 

@@ -25,7 +25,6 @@ import           System.Timeout
 
 import           Control.Concurrent.Async (async, wait)
 
-import           Control.Applicative      ((<$>), (<*>))
 import           Control.Monad            (forM)
 import           Data.Maybe               (catMaybes)
 
@@ -38,11 +37,11 @@ data Service (serviceType :: ServiceKind) input output = MkService {
             } deriving (Show)
 
 
-type Youtube  = Service YoutubeT String Youtube.Channel
-type Reddit   = Service RedditT String Reddit.Reddit
-type Serie    = Service SerieT String ShowRss.Serie
-type Anime    = Service AnimeT String Haruhichan.Anime
-type Forecast = Service ForecastT String OpenWeather.Weather
+type Youtube  = Service 'YoutubeT String Youtube.Channel
+type Reddit   = Service 'RedditT String Reddit.Reddit
+type Serie    = Service 'SerieT String ShowRss.Serie
+type Anime    = Service 'AnimeT String Haruhichan.Anime
+type Forecast = Service 'ForecastT String OpenWeather.Weather
 
 data ServiceDTO = YoutubeDTO Youtube
                 | RedditDTO Reddit

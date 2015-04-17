@@ -13,7 +13,7 @@ import           Http(getPages)
 
 import qualified Data.ByteString.Lazy       as BL
 
-import           Control.Applicative
+
 import           Data.Maybe
 
 import           Control.Lens

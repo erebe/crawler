@@ -4,7 +4,7 @@ module Config where
 
 import           Service                   as S
 
-import           Control.Applicative       ((<$>), (<*>))
+
 import           Control.Monad             (forM, guard, mzero)
 import           Control.Monad.IO.Class    (liftIO)
 import           Control.Monad.Trans.Maybe (MaybeT, runMaybeT)
