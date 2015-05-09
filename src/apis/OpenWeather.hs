@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 
@@ -9,27 +9,28 @@ module OpenWeather ( Forecast(Forecast, date, temperature, description, iconUrl)
 
 
 
-import           Http(getPages)
+import           Http                 (getPages)
 
-import qualified Data.ByteString.Lazy       as BL
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.Text            as T
+import qualified Data.Text.Encoding   as T
 
-import Data.Aeson
-import Data.Aeson.Types
-import Control.Monad(join, mzero, forM)
-import Data.Maybe
-import Data.UnixTime
-import Data.Int
-import Foreign.C.Types
+import           Control.Lens
+import           Control.Monad        (join)
+import           Data.Aeson
+import           Data.Aeson.Lens
+import           Data.Int
+import           Data.Maybe
+import           Data.UnixTime
+import           Foreign.C.Types
 
-data Forecast = Forecast { date :: T.Text
+data Forecast = Forecast { date        :: T.Text
                          , temperature :: !Double
                          , description :: T.Text
-                         , iconUrl :: T.Text
+                         , iconUrl     :: T.Text
                          } deriving (Show)
 
-data Weather = Weather { city :: T.Text
+data Weather = Weather { city      :: T.Text
                        , forecasts :: [Forecast]
                        }  deriving (Show)
 
@@ -48,23 +49,18 @@ buildWeatherApiUrl cityName =  "http://api.openweathermap.org/data/2.5/forecast/
 
 
 parseJsonApi :: BL.ByteString -> Maybe Weather
-parseJsonApi jsonStr =  do
-    jsonObj <- decode jsonStr
-    flip parseMaybe jsonObj $ \obj -> do
-        cityName   <- obj .: "city" >>= (.: "name")
-        forecasts' <- obj .: "list" :: Parser [Object]
+parseJsonApi js =  do
+    v <- decode js
+    Weather <$> v ^. key "city" . key "name"
+            <*> return (parseForecasts v)
 
-        t <- forM forecasts' $ \forecast -> do
-                weather <- listToMaybe <$> (forecast .: "weather" :: Parser [Object])
-                case weather of
-                    Just weather' -> mkForecast <$> forecast .: "dt"
-                                                <*> (forecast .: "temp" >>= (.: "day"))
-                                                <*> weather' .: "description"
-                                                <*> weather' .: "icon"
-                    _ -> mzero
-
-        return $ Weather cityName t
-
+  where
+    parseForecasts v = catMaybes $ v ^.. key "list" . traverseArray . to parseForecast
+    parseForecast v = mkForecast
+                      <$> v ^. key "dt"
+                      <*> v ^. key "temp" . key "day"
+                      <*> v ^. key "weather" . nth 0 . key "description"
+                      <*> v ^. key "weather" . nth 0 . key "icon"
 
 fetch :: [String] -> IO [Weather]
 fetch cities = do

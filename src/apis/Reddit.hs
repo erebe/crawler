@@ -1,24 +1,24 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 --TODO refine export
 
 module Reddit where
 
-import           Http(getPages)
+import           Http                 (getPages)
 
-import qualified Data.ByteString.Lazy       as BL
+import qualified Data.ByteString.Lazy as BL
 
 
 import           Data.Maybe
 
 import           Control.Lens
 
-import qualified Data.Text as T
+import qualified Data.Text            as T
 
-import Data.Aeson
-import Data.Aeson.Types
-import Control.Monad(forM, join)
+import           Control.Monad        (join)
+import           Data.Aeson
+import           Data.Aeson.Lens
 
 
 data Topic = Topic { _title       :: T.Text
@@ -43,23 +43,20 @@ getSubRedditURL subName =  "https://www.reddit.com/r/" ++ subName ++ ".json"
 
 decodeAPI :: BL.ByteString -> Maybe Reddit
 decodeAPI js = do
-    result <- decode js
-    join $ flip parseMaybe result $ \obj -> do
-        topicsObj <- obj .: "data" >>= (.: "children") :: Parser [Object]
-        topics' <- extractTopics topicsObj
-        return $ Reddit <$> Just "kind" <*> topics'
+    v  <- decode js
+    let topics' = v ^. key "data" . key "children"
 
+    return $ Reddit "kind" (parseTopics topics')
 
     where
-        extractTopics objs = return $ forM objs $ \obj ->
-            flip parseMaybe obj $ \container -> do
-            topic <- container .: "data"
-            Topic <$> topic .: "title"
-                  <*> topic .: "url"
-                  <*> (("https://www.reddit.com" `T.append`) <$> topic .: "permalink")
-                  <*> topic .: "thumbnail"
-                  <*> topic .: "created"
-                  <*> topic .: "num_comments"
+      parseTopics v = catMaybes $ v ^.. traverseArray . key "data" . to parseTopic
+      parseTopic v = Topic
+                     <$> v ^. key "title"
+                     <*> v ^. key "url"
+                     <*> fmap (T.append "https://www.reddit.com") (v ^. key "permalink")
+                     <*> v ^. key "thumbnail"
+                     <*> v ^. key "created"
+                     <*> v ^. key "num_comments"
 
 fetch :: [String] -> IO [Reddit]
 fetch subRedditNames = do

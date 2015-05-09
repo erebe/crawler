@@ -55,21 +55,22 @@ getChannelURL channelId = protocol ++ url' ++ generateSuffix [apiKey, channelId'
     generateSuffix = ("?" ++) . drop 1 . foldl (\acc (k, val) -> acc ++ "&" ++ k ++ "=" ++ val) ""
 
 
-parseVid :: Getter (Maybe Value) (Maybe Video)
-parseVid = to getter
+parseVideo :: Maybe Value -> Maybe Video
+parseVideo = parse
   where
     toSeconds timeStr =  T.pack . show . utSeconds $ parseUnixTime "%FT%X" (T.encodeUtf8 timeStr)
     format vidID = "https://www.youtube.com/v/" `T.append` vidID `T.append` "?vq=hd720"
-    getter val = Video <$> val ^. key "snippet" . key "title"
-                       <*> (format <$> val ^. key "id" . key "videoId")
-                       <*> val ^. key "snippet" . key "thumbnails" . key "high" . key "url"
-                       <*> (toSeconds <$> val ^. key "snippet" ^. key "publishedAt")
+    parse val = Video
+                <$> val ^. key "snippet" . key "title"
+                <*> (format <$> val ^. key "id" . key "videoId")
+                <*> val ^. key "snippet" . key "thumbnails" . key "high" . key "url"
+                <*> (toSeconds <$> val ^. key "snippet" . key "publishedAt")
 
 decodeAPI :: BL.ByteString -> Maybe Channel
 decodeAPI string = do
     let v = decode string ^. key "items"
     let title' =  v ^. nth 0 . key "snippet" . key "channelTitle"
-    let vids = catMaybes $ v ^.. traverseArray . parseVid
+    let vids = catMaybes $ v ^.. traverseArray . to parseVideo
 
     Channel <$> title' <*> return vids
 

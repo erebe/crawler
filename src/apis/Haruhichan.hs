@@ -1,5 +1,5 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Haruhichan ( Episode()
                   , title, magnetURI, date
@@ -9,20 +9,20 @@ module Haruhichan ( Episode()
                   ) where
 
 
-import           Http(getPages)
+import           Http                 (getPages)
 
-import qualified Data.ByteString.Lazy       as BL
+import qualified Data.ByteString.Lazy as BL
 
 
 import           Data.Maybe
 
 import           Control.Lens
 
-import qualified Data.Text as T
+import qualified Data.Text            as T
 
-import Data.Aeson
-import Data.Aeson.Types
-import Control.Monad(forM, join)
+import           Control.Monad        (join)
+import           Data.Aeson
+import           Data.Aeson.Lens
 
 
 data Episode = Episode { _title     :: T.Text
@@ -44,24 +44,18 @@ getAnimeURL animeId =  "http://ptp.haruhichan.com/anime.php?id=" ++ animeId
 
 
 decodeAPI :: BL.ByteString -> Maybe Anime
-decodeAPI js = do
-    result <- decode js
-    join $ flip parseMaybe result $ \obj -> do
-        jsName <- obj .: "name"
-        jsThumbnail <- obj .: "malimg"
-        episodesObj <- obj .: "episodes" :: Parser [Object]
-        episodes' <- extractEpisodes episodesObj
-
-        return $ Anime <$> jsName
-                       <*> jsThumbnail
-                       <*> episodes'
+decodeAPI js = decode js >>= \v ->
+    Anime
+      <$> v ^. key "name"
+      <*> v ^. key "malimg"
+      <*> return (parseEpisodes v)
 
     where
-        extractEpisodes objs = return $ forM objs $ \episodeObj ->
-            flip parseMaybe episodeObj $ \episode ->
-                Episode <$> episode .: "name"
-                        <*> episode .: "magnet"
-                        <*> episode .: "time"
+      parseEpisodes v = catMaybes $ v ^. key "episodes" ^.. traverseArray . to parseEpisode
+      parseEpisode val = Episode
+                         <$> val ^. key "name"
+                         <*> val ^. key  "magnet"
+                         <*> val ^. key "time"
 
 
 
