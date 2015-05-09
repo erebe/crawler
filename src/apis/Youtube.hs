@@ -55,8 +55,8 @@ getChannelURL channelId = protocol ++ url' ++ generateSuffix [apiKey, channelId'
     generateSuffix = ("?" ++) . drop 1 . foldl (\acc (k, val) -> acc ++ "&" ++ k ++ "=" ++ val) ""
 
 
-parseVid :: Lens' (Maybe Value) (Maybe Video)
-parseVid = lens getter undefined
+parseVid :: Getter (Maybe Value) (Maybe Video)
+parseVid = to getter
   where
     toSeconds timeStr =  T.pack . show . utSeconds $ parseUnixTime "%FT%X" (T.encodeUtf8 timeStr)
     format vidID = "https://www.youtube.com/v/" `T.append` vidID `T.append` "?vq=hd720"
