@@ -51,7 +51,7 @@ getChannelURL channelId = protocol ++ url' ++ generateSuffix [apiKey, channelId'
     channelId'     = ("channelId"  , channelId)
     part           = ("part"       , "snippet,id")
     order          = ("order"      , "date")
-    limit          = ("maxResults" , "5")
+    limit          = ("maxResults" , "50")
     generateSuffix = ("?" ++) . drop 1 . foldl (\acc (k, val) -> acc ++ "&" ++ k ++ "=" ++ val) ""
 
 
