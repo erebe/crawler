@@ -14,11 +14,11 @@ Executable          crawler
     ghc-options:         -Wall -O3 -threaded
     --ghc-prof-options:-prof -fprof-auto -rtsopts
     main-is:             Main.hs
-    Build-Depends:       base,  async
+    Build-Depends:       base, async
                         ,scotty, http-conduit, http-types
                         ,transformers, lens
                         ,directory, unbounded-delays
-                        ,aeson, tagsoup, htoml
+                        ,aeson, aeson-lens, tagsoup, htoml
                         ,text, bytestring
                         ,time, unix-time
 

@@ -1,5 +1,5 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Youtube ( Video()
                , videos, name
@@ -8,9 +8,9 @@ module Youtube ( Video()
                , fetch
                ) where
 
-import           Http(getPages)
+import           Http                 (getPages)
 
-import qualified Data.ByteString.Lazy       as BL
+import qualified Data.ByteString.Lazy as BL
 
 
 import           Data.Maybe
@@ -19,12 +19,12 @@ import           Control.Lens
 
 import           Data.UnixTime
 
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+import qualified Data.Text            as T
+import qualified Data.Text.Encoding   as T
 
-import Data.Aeson
-import Data.Aeson.Types
-import Control.Monad(forM, join)
+import           Control.Monad        (join)
+import           Data.Aeson
+import           Data.Aeson.Lens
 
 data Video = Video { _title     :: T.Text
                    , _url       :: T.Text
@@ -41,35 +41,40 @@ data Channel = Channel { _name   :: T.Text
 $(makeLenses ''Video)
 $(makeLenses ''Channel)
 
-
 getChannelURL :: String -> String
-getChannelURL str = "https://gdata.youtube.com/feeds/api/users/" ++ str ++ "/uploads?v=2&alt=jsonc&ordered=published"
+getChannelURL channelId = protocol ++ url' ++ generateSuffix [apiKey, channelId', part, order, limit]
+  where
+    -- Don't really care much if the api key is harcoded, feel free to stole it you bots
+    apiKey         = ("key"        , "AIzaSyDX0vO_CsKPls9nK0N5_TXgZa-9minZ920")
+    protocol       = "https://"
+    url'           = "www.googleapis.com/youtube/v3/search"
+    channelId'     = ("channelId"  , channelId)
+    part           = ("part"       , "snippet,id")
+    order          = ("order"      , "date")
+    limit          = ("maxResults" , "5")
+    generateSuffix = ("?" ++) . drop 1 . foldl (\acc (k, val) -> acc ++ "&" ++ k ++ "=" ++ val) ""
 
 
+parseVid :: Lens' (Maybe Value) (Maybe Video)
+parseVid = lens getter undefined
+  where
+    toSeconds timeStr =  T.pack . show . utSeconds $ parseUnixTime "%FT%X" (T.encodeUtf8 timeStr)
+    format vidID = "https://www.youtube.com/v/" `T.append` vidID `T.append` "?vq=hd720"
+    getter val = Video <$> val ^. key "snippet" . key "title"
+                       <*> (format <$> val ^. key "id" . key "videoId")
+                       <*> val ^. key "snippet" . key "thumbnails" . key "high" . key "url"
+                       <*> (toSeconds <$> val ^. key "snippet" ^. key "publishedAt")
 
-decodeAPI :: BL.ByteString -> Maybe [Video]
+decodeAPI :: BL.ByteString -> Maybe Channel
 decodeAPI string = do
-    result <- decode string
-    join $ flip parseMaybe result $ \obj -> do
-             dataa <- obj .: "data"
-             items <- dataa .: "items" :: Parser [Object]
-             return $ forM items $ \jitem ->
-                    flip parseMaybe jitem $ \item ->
-                        Video <$> item .: "title"
-                              <*> (format <$> (item .: "id"))
-                              <*> (item .: "thumbnail" >>= (.: "hqDefault"))
-                              <*> (toSeconds <$> (item .: "updated"))
+    let v = decode string ^. key "items"
+    let title' =  v ^. nth 0 . key "snippet" . key "channelTitle"
+    let vids = catMaybes $ v ^.. traverseArray . parseVid
 
-    where
-        format vidID = "https://www.youtube.com/v/" `T.append` vidID `T.append` "?vq=hd720"
-        toSeconds timeStr =  T.pack . show . utSeconds $ parseUnixTime "%FT%X" (T.encodeUtf8 timeStr)
+    Channel <$> title' <*> return vids
 
 fetch :: [String] -> IO [Channel]
-fetch channelsName = do
-    youtubeVideos <- getPages decodeAPI (getChannelURL <$> channelsName)
-
-    let channels = zipWith (\chName vids -> Channel (T.pack chName) (fromMaybe [] (join vids)))
-                           channelsName youtubeVideos
-
-    return channels
+fetch channelIds = do
+    channels <- getPages decodeAPI (getChannelURL <$> channelIds)
+    return . catMaybes $ join <$> channels
 
