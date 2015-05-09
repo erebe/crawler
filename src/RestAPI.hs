@@ -28,6 +28,7 @@ import           Data.Aeson                hiding (json)
 import           Data.Aeson.TH
 
 import           Data.List
+import           Debug.Trace
 
 
 
@@ -90,7 +91,7 @@ instance APIVerb Youtube where
   lastA ctx = json  [channel & Youtube.videos .~ take 1 (channel^.Youtube.videos)
                     | channel <- outputs ctx]
   findA toFind ctx = json $ outputs ctx^..traversed.filtered
-                               (\channel -> toFind `T.isInfixOf` T.toUpper (channel^.Youtube.name))
+                               (\channel -> toFind == T.toUpper (channel^.Youtube.name))
 
 instance APIVerb Serie where
   name _ = "serie"
@@ -98,7 +99,7 @@ instance APIVerb Serie where
   lastA ctx = json [serie & Serie.episodes .~ take 1 (serie^.Serie.episodes)
                            | serie <- outputs ctx]
   findA toFind ctx = json $ outputs ctx^..traversed.filtered
-                             (\serie -> toFind `T.isInfixOf` T.toUpper (serie^.Serie.name))
+                             (\serie -> toFind == T.toUpper (serie^.Serie.name))
 
 instance APIVerb Anime where
   name _ = "anime"
@@ -106,7 +107,7 @@ instance APIVerb Anime where
   lastA ctx = json [anime & Anime.episodes .~ take 1 (anime^.Anime.episodes)
                            | anime <- outputs ctx]
   findA toFind ctx = json $ outputs ctx^..traversed.filtered
-                             (\anime -> toFind `T.isInfixOf` T.toUpper (anime^.Anime.name))
+                             (\anime -> toFind == T.toUpper (anime^.Anime.name))
 
 instance APIVerb Reddit where
   name _ = "reddit"
@@ -114,7 +115,7 @@ instance APIVerb Reddit where
   lastA ctx = json [reddit & Reddit.topics .~ take 25 (reddit^.Reddit.topics)
                             | reddit <- outputs ctx]
   findA toFind ctx = json $ outputs ctx^..traversed.filtered
-                              (\reddit -> toFind `T.isInfixOf` T.toUpper (reddit^.Reddit.name))
+                              (\reddit -> toFind == T.toUpper (reddit^.Reddit.name))
 
 instance APIVerb Forecast where
   name _ = "forecast"
@@ -122,7 +123,7 @@ instance APIVerb Forecast where
   lastA ctx = json [Weather.Weather (Weather.city city) (take 1 $ Weather.forecasts city)
                               | city <- outputs ctx]
   findA toFind ctx = json [city | city <- outputs ctx
-                                , toFind `T.isInfixOf` T.toUpper (Weather.city city)]
+                                , toFind == T.toUpper (Weather.city city)]
 
 dispatch :: APIVerb a => String -> a ->  ActionM ()
 dispatch action service = case action of
@@ -136,26 +137,26 @@ runServer ::  MVar [ServiceDTO] -> Int -> IO ()
 runServer queue port = scotty port $ do
 
     get (regex "^/api/([^/]+)/(.*)") $ do
-        service   <- param "1" :: ActionM String
-        action    <- param "2"  :: ActionM String
-        services  <- liftIO $ readMVar queue
-        let requestResult = dispatch action <$> find ((service ==) . name) services
+      service   <- param "1" :: ActionM String
+      action    <- param "2"  :: ActionM String
+      services  <- liftIO $ readMVar queue
+      let requestResult = dispatch action <$> find ((service ==) . name) services
 
-        fromMaybe next requestResult
+      fromMaybe next requestResult
 
 
     get "/assets/:folder/:file" $ do
-        folderName <- param "folder" :: ActionM String
-        fileName   <- param "file"   :: ActionM String
-        file ("thirdparty/homepage/" ++ folderName ++ "/" ++ fileName)
+      folderName <- param "folder" :: ActionM String
+      fileName   <- param "file"   :: ActionM String
+      file ("thirdparty/homepage/" ++ folderName ++ "/" ++ fileName)
 
-    get "/favicon.ico" $ do
-        file ("thirdparty/homepage/favicon.ico")
+    get "/favicon.ico"
+      (file "thirdparty/homepage/favicon.ico")
 
 
     notFound $ do
-        status ok200
-        setHeader "Content-type" "text/html; charset=utf-8"
-        file "thirdparty/homepage/index.html"
+      status ok200
+      setHeader "Content-type" "text/html; charset=utf-8"
+      file "thirdparty/homepage/index.html"
 
 
