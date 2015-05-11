@@ -15,24 +15,18 @@ import qualified ShowRss                   as Serie
 import qualified Youtube
 
 import           Control.Concurrent.MVar   (MVar, readMVar)
-import           Data.Maybe
-
 import           Control.Lens              hiding ((.=))
 import           Control.Monad.IO.Class    (liftIO)
-import           Network.HTTP.Types.Status (ok200)
-import           Web.Scotty
-
-import qualified Data.Text                 as T
 
 import           Data.Aeson                hiding (json)
 import           Data.Aeson.TH
 
 import           Data.List
-import           Debug.Trace
-
-
-
+import           Data.Maybe
+import qualified Data.Text                 as T
 import           Data.UnixTime
+import           Network.HTTP.Types.Status (ok200)
+import           Web.Scotty
 
 instance ToJSON UnixTime where
     toJSON = toJSON . show . utSeconds
