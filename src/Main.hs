@@ -1,16 +1,17 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
+
+import           ClassyPrelude
 
 import qualified Config
 import qualified RestAPI
 import           Service
 
 import           Control.Concurrent.Async        (async)
-import           Control.Concurrent.MVar         (MVar, newMVar, swapMVar)
 import           Control.Concurrent.Thread.Delay (delay)
-import           Control.Monad                   (forever, guard)
-import           Data.Maybe
+import           Data.Maybe                      (fromJust)
 
 
 main :: IO ()

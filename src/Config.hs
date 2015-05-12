@@ -1,18 +1,19 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Config where
 
+import           ClassyPrelude
 import           Service                   as S
 
 
-import           Control.Monad             (forM, guard, mzero)
-import           Control.Monad.IO.Class    (liftIO)
 import           Control.Monad.Trans.Maybe (MaybeT, runMaybeT)
 import           Data.Aeson
 import           Data.Aeson.Types
-import           Data.Maybe
+
 import           Data.Text.IO              (readFile)
 import           System.Directory          (doesFileExist, getHomeDirectory)
+
 import           Text.Toml
 import           Text.Toml.Types
 
@@ -72,16 +73,17 @@ load = do
     where
         extractConfig :: MaybeT IO Config
         extractConfig = do
-            configPath      <- liftIO $ (++ "/.config/crawler.rc") <$> getHomeDirectory
+            configPath      <- liftIO $ (<> "/.config/crawler.rc") <$> getHomeDirectory
             isConfigPresent <- liftIO $ doesFileExist configPath
             guard isConfigPresent
 
             file <- liftIO $ Data.Text.IO.readFile configPath
             toml <- case parseTomlDoc "" file of
-                  Right val -> return val
-                  Left err -> do liftIO $ print err
-                                 return emptyTable
+                         Right val -> return val
+                         Left err -> do liftIO $ print err
+                                        return emptyTable
 
             let config = parseMaybe parseJSON (toJSON toml)
-            guard (isJust config)
-            return $ fromJust config
+            case config of
+                 Just x -> return x
+                 _ -> mzero

@@ -1,5 +1,7 @@
-{-# LANGUAGE DataKinds      #-}
-{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE KindSignatures    #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Service
        -- ( mkYoutube
@@ -19,14 +21,12 @@ import qualified Reddit
 import qualified ShowRss
 import qualified Youtube
 
+import           ClassyPrelude
 import           Data.Time
 import           Data.UnixTime
 import           System.Timeout
 
 import           Control.Concurrent.Async (async, wait)
-
-import           Control.Monad            (forM)
-import           Data.Maybe               (catMaybes)
 
 data ServiceKind =  YoutubeT | RedditT | SerieT | AnimeT | ForecastT
 data Service (serviceType :: ServiceKind) input output = MkService {
@@ -74,12 +74,12 @@ fetch ins fetcher = do
 updateServices :: [IO ServiceDTO] -> IO [ServiceDTO]
 updateServices services = do
   putStrLn "---------------------------------------------------"
-  putStrLn . ("Start fetching :: " ++ ) . show =<< getLocalTime
+  putStrLn . ("Start fetching :: " ++ ) . tshow =<< getLocalTime
 
   handles <- forM services (async . timeoutAfterMin 10)
   services' <- forM handles wait
 
-  putStrLn . ("Done fetching :: " ++ ) . show =<< getLocalTime
+  putStrLn . ("Done fetching :: " ++ ) . tshow =<< getLocalTime
   putStrLn "---------------------------------------------------"
 
   return $ catMaybes services'

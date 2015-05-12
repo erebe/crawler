@@ -11,16 +11,16 @@ build-type:          Simple
 
 Executable          crawler
     hs-source-dirs:       src src/apis
-    ghc-options:         -Wall -O3 -threaded
+    ghc-options:         -Wall -O3 -threaded -XNoImplicitPrelude
     --ghc-prof-options:-prof -fprof-auto -rtsopts
     main-is:             Main.hs
     Build-Depends:       base, async
                         ,scotty, http-conduit, http-types
-                        ,transformers, lens
+                        ,transformers, resourcet, lens
                         ,directory, unbounded-delays
-                        ,aeson, aeson-lens, tagsoup, htoml
+                        ,aeson, lens-aeson, tagsoup, htoml
                         ,text, bytestring
-                        ,time, unix-time
+                        ,time, unix-time, classy-prelude
 
 --Library
 --    ghc-options:     -O3 -Wall

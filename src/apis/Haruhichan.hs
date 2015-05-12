@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
@@ -9,18 +10,13 @@ module Haruhichan ( Episode()
                   ) where
 
 
+import           ClassyPrelude
 import           Http                 (getPages)
 
 import qualified Data.ByteString.Lazy as BL
-
-
-import           Data.Maybe
-
-import           Control.Lens
-
 import qualified Data.Text            as T
 
-import           Control.Monad        (join)
+import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Lens
 
@@ -40,23 +36,23 @@ $(makeLenses ''Episode)
 $(makeLenses ''Anime)
 
 getAnimeURL :: String -> String
-getAnimeURL animeId =  "http://ptp.haruhichan.com/anime.php?id=" ++ animeId
+getAnimeURL animeId =  "http://ptp.haruhichan.com/anime.php?id=" <> animeId
 
 
 decodeAPI :: BL.ByteString -> Maybe Anime
-decodeAPI js = decode js >>= \v ->
+decodeAPI js = do
+    v <- decode js :: Maybe Value
     Anime
-      <$> v ^. key "name"
-      <*> v ^. key "malimg"
+      <$> v ^? key "name" . _String
+      <*> v ^? key "malimg" . _String
       <*> return (parseEpisodes v)
 
     where
-      parseEpisodes v = catMaybes $ v ^. key "episodes" ^.. traverseArray . to parseEpisode
+      parseEpisodes v = catMaybes $ v ^.. key "episodes" . _Array . traverse . to parseEpisode
       parseEpisode val = Episode
-                         <$> val ^. key "name"
-                         <*> val ^. key  "magnet"
-                         <*> val ^. key "time"
-
+                         <$> val ^? key "name" . _String
+                         <*> val ^? key "magnet" . _String
+                         <*> val ^? key "time" . _String
 
 
 fetch :: [String] -> IO [Anime]

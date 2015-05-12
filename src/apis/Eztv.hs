@@ -1,3 +1,5 @@
+{--
+
 {-# LANGUAGE TemplateHaskell #-}
 
 module Eztv ( Serie()
@@ -84,3 +86,4 @@ fetchSeries seriesNames = do
     return series
 
 
+--}

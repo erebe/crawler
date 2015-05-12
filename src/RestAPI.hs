@@ -1,11 +1,13 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE NoImplicitPrelude    #-}
 {-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE TemplateHaskell      #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module RestAPI (runServer) where
 
+import           ClassyPrelude
 import           Service
 
 import qualified Haruhichan                as Anime
@@ -14,17 +16,14 @@ import qualified Reddit
 import qualified ShowRss                   as Serie
 import qualified Youtube
 
-import           Control.Concurrent.MVar   (MVar, readMVar)
 import           Control.Lens              hiding ((.=))
-import           Control.Monad.IO.Class    (liftIO)
 
 import           Data.Aeson                hiding (json)
 import           Data.Aeson.TH
 
-import           Data.List
-import           Data.Maybe
 import qualified Data.Text                 as T
 import           Data.UnixTime
+
 import           Network.HTTP.Types.Status (ok200)
 import           Web.Scotty
 

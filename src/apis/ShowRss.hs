@@ -1,4 +1,5 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module ShowRss ( Serie()
                , name, episodes
@@ -7,22 +8,16 @@ module ShowRss ( Serie()
                , fetch
                ) where
 
-import           Http(getPages)
-
-import qualified Data.ByteString.Lazy as BL
-
-import           Text.HTML.TagSoup
-
-import           Control.Monad
-import           Data.Maybe
-
-import           Data.UnixTime
+import           ClassyPrelude
+import           Http                 (getPages)
 
 import           Control.Lens
-import           Data.List
+import           Data.UnixTime
+import           Text.HTML.TagSoup
 
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.Text            as T
+import qualified Data.Text.Encoding   as T
 
 data Episode = Episode { _title     :: T.Text
                        , _magnetURI :: T.Text
@@ -55,7 +50,7 @@ extractData xmlStr = do
 
 
 craftUrl :: String -> String
-craftUrl idx = protocol ++ baseUrl ++ idx ++ extension
+craftUrl idx = protocol <> baseUrl <> idx <> extension
     where
         protocol  = "http://"
         baseUrl   = "showrss.info/feeds/"

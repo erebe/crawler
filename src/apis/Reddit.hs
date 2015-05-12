@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
@@ -5,18 +6,13 @@
 
 module Reddit where
 
+import           ClassyPrelude
 import           Http                 (getPages)
 
 import qualified Data.ByteString.Lazy as BL
-
-
-import           Data.Maybe
-
-import           Control.Lens
-
 import qualified Data.Text            as T
 
-import           Control.Monad        (join)
+import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Lens
 
@@ -39,24 +35,24 @@ $(makeLenses ''Reddit)
 
 
 getSubRedditURL :: String -> String
-getSubRedditURL subName =  "https://www.reddit.com/r/" ++ subName ++ ".json"
+getSubRedditURL subName =  "https://www.reddit.com/r/" <> subName <> ".json"
 
 decodeAPI :: BL.ByteString -> Maybe Reddit
 decodeAPI js = do
-    v  <- decode js
-    let topics' = v ^. key "data" . key "children"
+    v  <- decode js :: Maybe Value
+    topics' <- v ^? key "data" . key "children"
 
     return $ Reddit "kind" (parseTopics topics')
 
     where
-      parseTopics v = catMaybes $ v ^.. traverseArray . key "data" . to parseTopic
+      parseTopics v = catMaybes $ v ^.. _Array . traverse . key "data" . to parseTopic
       parseTopic v = Topic
-                     <$> v ^. key "title"
-                     <*> v ^. key "url"
-                     <*> fmap (T.append "https://www.reddit.com") (v ^. key "permalink")
-                     <*> v ^. key "thumbnail"
-                     <*> v ^. key "created"
-                     <*> v ^. key "num_comments"
+                     <$> v ^? key "title" . _String
+                     <*> v ^? key "url" . _String
+                     <*> v ^? key "permalink" . _String . to ("https://www.reddit.com" <>)
+                     <*> v ^? key "thumbnail" . _String
+                     <*> v ^? key "created" . _Integral
+                     <*> v ^? key "num_comments" . _Integral
 
 fetch :: [String] -> IO [Reddit]
 fetch subRedditNames = do
