@@ -1,76 +1,3 @@
-jQuery(document).ready(function($) {
-    var contentSections = $('.cd-section'),
-        navigationItems = $('#cd-vertical-nav a');
-
-    updateNavigation();
-    $(window).on('scroll', function(){
-        updateNavigation();
-    });
-
-    //open the lateral panel
-    $('.cd-btn').on('click', function(event){
-        event.preventDefault();
-        $('.cd-panel').addClass('is-visible');
-    });
-    //clode the lateral panel
-    $('.cd-panel').on('click', function(event){
-        if( $(event.target).is('.cd-panel') || $(event.target).is('.cd-panel-close') ) {
-            $('.cd-panel').removeClass('is-visible');
-            event.preventDefault();
-        }
-    });
-    //smooth scroll to the section
-    navigationItems.on('click', function(event){
-        event.preventDefault();
-        smoothScroll($(this.hash));
-    });
-    //smooth scroll to second section
-    $('.cd-scroll-down').on('click', function(event){
-        event.preventDefault();
-        smoothScroll($(this.hash));
-    });
-
-    //open-close navigation on touch devices
-    $('.touch .cd-nav-trigger').on('click', function(){
-        $('.touch #cd-vertical-nav').toggleClass('open');
-
-    });
-    //close navigation on touch devices when selectin an elemnt from the list
-    $('.touch #cd-vertical-nav a').on('click', function(){
-        $('.touch #cd-vertical-nav').removeClass('open');
-    });
-
-    function updateNavigation() {
-        contentSections.each(function(){
-            $this = $(this);
-            var activeSection = $('#cd-vertical-nav a[href="#'+$this.attr('id')+'"]').data('number') - 1;
-            if ( ( $this.offset().top - $(window).height()/2 < $(window).scrollTop() ) && ( $this.offset().top + $this.height() - $(window).height()/2 > $(window).scrollTop() ) ) {
-                navigationItems.eq(activeSection).addClass('is-selected');
-            }else {
-                navigationItems.eq(activeSection).removeClass('is-selected');
-            }
-        });
-    }
-
-    function smoothScroll(target) {
-        $('body,html').animate(
-            {'scrollTop':target.offset().top},
-            600
-        );
-    }
-});
-
-
-document.body.onload = function () {
-
-    callAjax("/api/youtube/"	, function(data) { loadVideos(data, $("#videos")); });
-    callAjax("/api/serie/"	, function(data) { loadSeries(data, $("#series")); });
-    callAjax("/api/anime/"	, function(data) { loadAnimes(data, $("#animes")); });
-    callAjax("/api/forecast/"	, function(data) { loadWeather(data, $("#weathers")); });
-    callAjax("/api/reddit/"	, function(data) { loadReddit(data, $("#reddits")); });
-
-};
-
 function loadReddit(data, container)
 {
     var json = JSON.parse(data);
@@ -323,3 +250,72 @@ function callAjax(url, callback)
     xmlhttp.send();
 }
 
+jQuery(document).ready(function($) {
+    callAjax("/api/youtube/"	, function(data) { loadVideos(data, $("#videos")); });
+    callAjax("/api/serie/"	, function(data) { loadSeries(data, $("#series")); });
+    callAjax("/api/anime/"	, function(data) { loadAnimes(data, $("#animes")); });
+    callAjax("/api/forecast/"	, function(data) { loadWeather(data, $("#weathers")); });
+    callAjax("/api/reddit/"	, function(data) { loadReddit(data, $("#reddits")); });
+
+
+    var contentSections = $('.cd-section'),
+        navigationItems = $('#cd-vertical-nav a');
+
+    updateNavigation();
+    $(window).on('scroll', function(){
+        updateNavigation();
+    });
+
+    //open the lateral panel
+    $('.cd-btn').on('click', function(event){
+        event.preventDefault();
+        $('.cd-panel').addClass('is-visible');
+    });
+    //clode the lateral panel
+    $('.cd-panel').on('click', function(event){
+        if( $(event.target).is('.cd-panel') || $(event.target).is('.cd-panel-close') ) {
+            $('.cd-panel').removeClass('is-visible');
+            event.preventDefault();
+        }
+    });
+    //smooth scroll to the section
+    navigationItems.on('click', function(event){
+        event.preventDefault();
+        smoothScroll($(this.hash));
+    });
+    //smooth scroll to second section
+    $('.cd-scroll-down').on('click', function(event){
+        event.preventDefault();
+        smoothScroll($(this.hash));
+    });
+
+    //open-close navigation on touch devices
+    $('.touch .cd-nav-trigger').on('click', function(){
+        $('.touch #cd-vertical-nav').toggleClass('open');
+
+    });
+    //close navigation on touch devices when selectin an elemnt from the list
+    $('.touch #cd-vertical-nav a').on('click', function(){
+        $('.touch #cd-vertical-nav').removeClass('open');
+    });
+
+    function updateNavigation() {
+        contentSections.each(function(){
+            $this = $(this);
+            var activeSection = $('#cd-vertical-nav a[href="#'+$this.attr('id')+'"]').data('number') - 1;
+            if ( ( $this.offset().top - $(window).height()/2 < $(window).scrollTop() ) && ( $this.offset().top + $this.height() - $(window).height()/2 > $(window).scrollTop() ) ) {
+                navigationItems.eq(activeSection).addClass('is-selected');
+            }else {
+                navigationItems.eq(activeSection).removeClass('is-selected');
+            }
+        });
+    }
+
+    function smoothScroll(target) {
+        $('body,html').animate(
+            {'scrollTop':target.offset().top},
+            600
+        );
+    }
+
+});
