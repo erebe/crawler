@@ -1,3 +1,5 @@
+'use strict';
+
 function loadReddit(data, container)
 {
     var json = JSON.parse(data);
@@ -301,9 +303,9 @@ jQuery(document).ready(function($) {
 
     function updateNavigation() {
         contentSections.each(function(){
-            $this = $(this);
-            var activeSection = $('#cd-vertical-nav a[href="#'+$this.attr('id')+'"]').data('number') - 1;
-            if ( ( $this.offset().top - $(window).height()/2 < $(window).scrollTop() ) && ( $this.offset().top + $this.height() - $(window).height()/2 > $(window).scrollTop() ) ) {
+            var th = $(this);
+            var activeSection = $('#cd-vertical-nav a[href="#'+th.attr('id')+'"]').data('number') - 1;
+            if ( ( th.offset().top - $(window).height()/2 < $(window).scrollTop() ) && ( th.offset().top + th.height() - $(window).height()/2 > $(window).scrollTop() ) ) {
                 navigationItems.eq(activeSection).addClass('is-selected');
             }else {
                 navigationItems.eq(activeSection).removeClass('is-selected');
