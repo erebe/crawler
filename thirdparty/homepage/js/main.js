@@ -33,7 +33,7 @@ function loadAnimes(data, container)
 {
     var json = JSON.parse(data);
     var animes = json.filter(function(anime) { return anime.episodes.length; } )
-                     .sort(function(a,b) { return a.episodes[0].date < b.episodes[0].date;} )
+                     .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
                      .map(function(anime) {
                          return anime.episodes.map(function(episode) {
                              return generateAnimeView(anime, episode); });
@@ -61,7 +61,7 @@ function loadSeries(data, container)
 {
     var json = JSON.parse(data);
     var series = json.filter(function(serie) { return serie.episodes.length} )
-                     .sort(function(a,b) { return a.episodes[0].date < b.episodes[0].date;} )
+                     .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
                      .map(function(serie) {
                         return serie.episodes.map(function(episode) {
                             return generateSerieView (serie.name, episode);
