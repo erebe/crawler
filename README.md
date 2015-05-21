@@ -1,10 +1,9 @@
 # Personnal Crawler
 
-I use this programm to give me an REST api/website homepage for the various sites that I read
+I use this programme to provide me with REST api/website homepage for the various sites that I read
 Crawl every x min for the informations
-
 Launching the program will create a webserver running on port 8086, I use it in synergy
-with nginx to provide an homepage from my server
+with nginx to serve the homepage from my server
 
 ## What to expect:
 - track torrents (ShowRss)
