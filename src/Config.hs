@@ -65,9 +65,8 @@ load = do
                        putStrLn "#########################################################################"
                        putStrLn "#############       Config file not found or Parse Error   ##############"
                        putStrLn "#############     Please add one at ~/.config/crawler.rc   ##############"
-                       putStrLn "########################################################################"
-                       putStrLn "#############              Here a default one              #############"
-                       putStrLn "########################################################################"
+                       putStrLn "#############       Look at the example in github repo     ##############"
+                       putStrLn "#########################################################################"
                        return Nothing
 
     where

@@ -1,0 +1,59 @@
+[application]
+listenOn = 8086
+updateFrequencyInMin = 30
+homepagePath = "thirdparty/homepage/"
+
+
+[services]
+# ChannelID (goto youtube, click on a video, channelID in the link of the channel name)
+youtube = [ "UCLvppPP2RucGfgeoZlq68fg" # hearthstonefr
+          , "UCgsTGuH5uCyL06kKY843fgw" # trolden1337
+          , "UCtR7Wal9aM7hBNOUx7J6T7w" # hsepicplays
+          , "UCSk_2s9ueWpi_piryxhN-9g" # FirdornLP
+          , "UC_yP2DpIgs5Y1uWC0T03Chw" # joueurdugrenier
+          , "UCBOEy0ETYHd5gWQ2DayMv_g" # languedepub2
+          , "UCC552Sd-3nyi_tk2BudLUzA" # AsapSCIENCE
+          , "UCxJka_qnTVquoIL-PQV5POg" # DanyCaligula
+          , "UC3LqW4ijMoENQ2Wv17ZrFJA" # pbsideachannel
+          , "UCJruTcTs7Gn2Tk7YC-ENeHQ" # GoldenMoustacheVideo
+          , "UCnrhy622SNPt04Avj5idFIg" # faireset2
+          , "UCwbV8cTR4yBgFdfa_BXV2OA" # deadwattsofficiel
+          , "UCUHW94eEFW7hkUMVaZz4eDg" # minutephysics
+          , "UCCpwMG0qZkr62FNZktfcvYg" # salutlesgeeks
+          , "UCbq4WwLfbhRxvyVYOTYU25g" # UnDropDansLaMare
+          , "UCm5wThREh298TkK8hCT9HuA" # datagueule
+          , "UCcziTK2NKeWtWQ6kB5tmQ8Q" # epenser1
+          ]
+
+# Name of the subreddit
+reddit = ["programming", "haskell", "unixporn", "programmerhumor"]
+
+# ShowRss.info id
+serie  = [ "962" # constantine
+         , "849" # the flash 2014
+         , "403" # grimm
+         , "5"   # the big bang theory
+         , "62"  # supernatural
+         , "711" # helix
+         , "543" # vikings
+         , "350" # game of thrones
+         , "318" # the walking dead
+         , "584" # under the dome 
+         , "799" # sillicon valley
+         ]
+# Haruhichan.com id
+anime = [ "613"
+        , "676"
+        , "703"
+        , "620" # No game no Life
+        , "668" # sidonia
+        , "900" # sidonia 2
+	    , "1083" # Fate Stay night 2
+        ]
+# city + country
+forecast = ["valbonne,fr", "guethary,fr", "lyon,fr", "nice,fr"]
+
+
+
+
+   

@@ -75,4 +75,3 @@ fetch :: [String] -> IO [Channel]
 fetch channelIds = do
     channels <- getPages decodeAPI (getChannelURL <$> channelIds)
     return . catMaybes $ join <$> channels
-
