@@ -1,19 +1,18 @@
 # Personnal Crawler
 
-I use this programm to give me an REST api for the different site that I follow
-I will automatically every 2 hour refresh every information
+I use this programm to give me an REST api/website homepage for the various sites that I read
+Crawl every x min for the informations
 
 Launching the program will create a webserver running on port 8086, I use it in synergy
-with nginx to offer an API from my server
-
-I use firefox and a custom greasemonkey script to prettify the API :)
+with nginx to provide an homepage from my server
 
 - What to expect:
-    - track torrents (from eztv or ShowRss)
-    - track Youtube channel
-    - track SubReddit
+    - track torrents (ShowRss)
+    - track Youtube channel (API v3)
+    - track SubReddit 
     - track weather (from openweathermap)
     - track anime (from haruhichan)
+    - track Twitter (directly in the homepage)
 
 - What to expect next: (maybe)
     - tracking of looking for group
