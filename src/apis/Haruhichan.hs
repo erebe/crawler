@@ -49,8 +49,9 @@ decodeAPI js = do
 
     where
       parseEpisodes v = catMaybes $ v ^.. key "episodes" . _Array . traverse . to parseEpisode
+      replaceUnderscore = T.map (\c -> if c == '_' then ' ' else c)
       parseEpisode val = Episode
-                         <$> val ^? key "name" . _String
+                         <$> val ^? key "name" . _String . to replaceUnderscore
                          <*> val ^? key "magnet" . _String
                          <*> val ^? key "time" . _String
 
