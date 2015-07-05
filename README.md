@@ -33,3 +33,9 @@ with nginx to serve the homepage from my server
 Example with the provided homepage
 ![alt text][logo]
 [logo]: https://github.com/erebe/crawler/raw/master/example.png "Homepage Example"
+
+
+## Todo
+1. Pass config file to the web service
+2. REST API add explicit find
+3. Add systemd unit file
