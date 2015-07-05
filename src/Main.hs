@@ -12,10 +12,14 @@ import           Service
 import           Control.Concurrent.Async        (async)
 import           Control.Concurrent.Thread.Delay (delay)
 import           Data.Maybe                      (fromJust)
+import           System.IO
 
 
 main :: IO ()
 main = do
+    hSetBuffering stdout LineBuffering
+    hSetBuffering stderr LineBuffering
+
     config <- Config.load
     guard (isJust config)
 
