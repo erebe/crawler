@@ -33,7 +33,7 @@ worker manager url = msum $ replicate 3 fetchPage
     where
       fetchPage = do
           body <- liftIO $ fetchPageImpl `Ex.catch` \(e :: HttpException) -> do
-              hPrint stderr e
+              hPrint stderr ((show e) <> " " <> url)
               return BL.empty
 
           guard(body /= BL.empty)

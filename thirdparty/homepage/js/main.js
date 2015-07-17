@@ -1,8 +1,7 @@
 'use strict';
 
-function loadReddit(data, container)
+function loadReddit(container, json)
 {
-    var json = JSON.parse(data);
     var subs = json.filter(function(sub) { return sub.topics.length; } )
                    .map(function(sub) {
                        var table = $("<table class='item reddit-item'><thead><tr><th>"
@@ -17,9 +16,8 @@ function loadReddit(data, container)
 
 }
 
-function loadWeather(data, container)
+function loadWeather(container, json)
 {
-    var json = JSON.parse(data);
     var weathers = json.filter(function(city) { return city.forecasts.length; } )
                      .map(function(city) {
                          return city.forecasts.map(function(forecast) {
@@ -29,9 +27,8 @@ function loadWeather(data, container)
     container.append.apply(container, weathers);
 }
 
-function loadAnimes(data, container)
+function loadAnimes(container, json)
 {
-    var json = JSON.parse(data);
     var animes = json.filter(function(anime) { return anime.episodes.length; } )
                      .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
                      .map(function(anime) {
@@ -43,9 +40,8 @@ function loadAnimes(data, container)
     container.append.apply(container, animes);
 }
 
-function loadVideos(data, container)
+function loadVideos(container, json)
 {
-    var json = JSON.parse(data);
     var videos = json.filter(function(channel) { return channel.videos.length; } )
                      .map(function(channel) {
                          return channel.videos.map(function(video) {
@@ -57,9 +53,8 @@ function loadVideos(data, container)
 
 }
 
-function loadSeries(data, container)
+function loadSeries(container, json)
 {
-    var json = JSON.parse(data);
     var series = json.filter(function(serie) { return serie.episodes.length} )
                      .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
                      .map(function(serie) {
@@ -113,18 +108,13 @@ function generateWeatherView(cityName, forecast) {
 
     header.click(function(event) {
         event.preventDefault();
-        $(".cd-panel-header-title").html(cityName);
-        callAjax("/api/forecast/" + encodeURIComponent(cityName), function(data) {
-            var panel = $(".cd-panel-content");
-            panel.empty();
-            loadWeather(data, panel);
-            panel.animate({ scrollTop: 0 }, 0);
-            $('.cd-panel').addClass('is-visible');
-        });
+        $.getJSON("/api/forecast/" + encodeURIComponent(cityName), 
+                loadWeather.bind(undefined, openPanel(cityName)));
     });
 
-    return container.append.apply(container, [header, thumbnail, footer]);
+    return container.append(header, thumbnail, footer);
 }
+
 
 function generateAnimeView(anime, episode)
 {
@@ -151,18 +141,12 @@ function generateAnimeView(anime, episode)
 
     header.click(function(event) {
         event.preventDefault();
-        $(".cd-panel-header-title").html(anime.name);
-        callAjax("/api/anime/" + encodeURIComponent(anime.name), function(data) {
-            var panel = $(".cd-panel-content");
-            panel.empty();
-            loadAnimes(data, panel);
-            panel.animate({ scrollTop: 0 }, 0);
-            $('.cd-panel').addClass('is-visible');
-        });
+        $.getJSON("/api/anime/" + encodeURIComponent(anime.name), 
+                loadAnimes.bind(undefined, openPanel(anime.name)));
     });
 
 
-    return container.append.apply(container, [header, thumbnail, footer]);
+    return container.append(header, thumbnail, footer);
 }
 
 function generateSerieView(serieName, episode)
@@ -184,18 +168,12 @@ function generateSerieView(serieName, episode)
 
     header.click(function(event) {
         event.preventDefault();
-        $(".cd-panel-header-title").html(serieName);
-        callAjax("/api/serie/" + encodeURIComponent(serieName), function(data) {
-            var panel = $(".cd-panel-content");
-            panel.empty();
-            loadSeries(data, panel);
-            panel.animate({ scrollTop: 0 }, 0);
-            $('.cd-panel').addClass('is-visible');
-        });
+        $.getJSON("/api/serie/" + encodeURIComponent(serieName),
+                loadSeries.bind(undefined, openPanel(serieName)));
     });
 
 
-    return container.append.apply(container, [header, footer]);
+    return container.append(header, footer);
 
 }
 
@@ -224,40 +202,31 @@ function generateVideoView(channelName, video)
 
     header.click(function(event) {
         event.preventDefault();
-        $(".cd-panel-header-title").html(channelName);
-        callAjax("/api/youtube/" + encodeURIComponent(channelName), function(data) {
-            var panel = $(".cd-panel-content");
-            panel.empty();
-            loadVideos(data, panel);
-            panel.animate({ scrollTop: 0 }, 0);
-            $('.cd-panel').addClass('is-visible');
-        });
+        $.getJSON("/api/youtube/" + encodeURIComponent(channelName), 
+                loadVideos.bind(undefined, openPanel(channelName)));
     });
 
 
-    return container.append.apply(container, [header, thumbnail, footer]);
+    return container.append(header, thumbnail, footer);
 }
 
+function openPanel(title) {
+    $(".cd-panel-header-title").html(title);
+    var panel = $(".cd-panel-content");
+    panel.empty();
+    panel.animate({ scrollTop: 0 }, 0);
+    $('.cd-panel').addClass('is-visible');
 
-function callAjax(url, callback)
-{
-    var url = url;
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function(){
-        if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
-            callback(xmlhttp.responseText);
-        }
-    }
-    xmlhttp.open("GET", url, true);
-    xmlhttp.send();
+    return panel;
+
 }
 
 jQuery(document).ready(function($) {
-    callAjax("/api/youtube/"	, function(data) { loadVideos(data, $("#videos")); });
-    callAjax("/api/serie/"	, function(data) { loadSeries(data, $("#series")); });
-    callAjax("/api/anime/"	, function(data) { loadAnimes(data, $("#animes")); });
-    callAjax("/api/forecast/"	, function(data) { loadWeather(data, $("#weathers")); });
-    callAjax("/api/reddit/"	, function(data) { loadReddit(data, $("#reddits")); });
+    $.getJSON("/api/youtube/",  loadVideos.bind(loadVideos, $("#videos")));
+    $.getJSON("/api/serie/",    loadSeries.bind(loadSeries, $("#series")));
+    $.getJSON("/api/anime/",    loadAnimes.bind(loadAnimes, $("#animes")));
+    $.getJSON("/api/forecast/", loadWeather.bind(loadWeather, $("#weathers")));
+    $.getJSON("/api/reddit/",   loadReddit.bind(loadReddit, $("#reddits")));
 
 
     var contentSections = $('.cd-section'),
