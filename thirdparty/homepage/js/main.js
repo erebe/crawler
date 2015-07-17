@@ -1,6 +1,6 @@
 'use strict';
 
-function loadReddit(container, json)
+function prepareReddit(container, json)
 {
     var subs = json.filter(function(sub) { return sub.topics.length; } )
                    .map(function(sub) {
@@ -16,7 +16,7 @@ function loadReddit(container, json)
 
 }
 
-function loadWeather(container, json)
+function prepareWeather(container, json)
 {
     var weathers = json.filter(function(city) { return city.forecasts.length; } )
                      .map(function(city) {
@@ -27,7 +27,7 @@ function loadWeather(container, json)
     container.append.apply(container, weathers);
 }
 
-function loadAnimes(container, json)
+function prepareAnimes(container, json)
 {
     var animes = json.filter(function(anime) { return anime.episodes.length; } )
                      .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
@@ -40,7 +40,7 @@ function loadAnimes(container, json)
     container.append.apply(container, animes);
 }
 
-function loadVideos(container, json)
+function prepareVideos(container, json)
 {
     var videos = json.filter(function(channel) { return channel.videos.length; } )
                      .map(function(channel) {
@@ -53,7 +53,7 @@ function loadVideos(container, json)
 
 }
 
-function loadSeries(container, json)
+function prepareSeries(container, json)
 {
     var series = json.filter(function(serie) { return serie.episodes.length} )
                      .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
@@ -80,9 +80,9 @@ function generateRedditView(subName, topic)
     }
 
 
-    var row = $('<tr></tr>');
-    var cell = $('<th></th>');
-    var row_bullet = $('<th class="bullet">'+ generateThumbnail(topic)+ '</th>');
+    var row = $('<tr>');
+    var cell = $('<th>');
+    var row_bullet = $('<th>', {"class": "bullet", html: generateThumbnail(topic)});
     var link = $('<a href="' + topic.url + '"><b>'+ topic.title + '</b></a>' +
         '<br/><a style="font-size:12px;" href="'+ topic.commentLink + '"> ' + topic.numComments + ' comments </a>');
 
@@ -92,7 +92,7 @@ function generateRedditView(subName, topic)
 
 function generateWeatherView(cityName, forecast) {
 
-    var container = $('<div class="item weather-item"></div>');
+    var container = $('<div>', {'class': 'item weather-item'});
     var header = $('<header><h1>' + cityName + '</h1></header>')
 
     var thumbnail = $('<div class="thumbnail">' +
@@ -109,7 +109,7 @@ function generateWeatherView(cityName, forecast) {
     header.click(function(event) {
         event.preventDefault();
         $.getJSON("/api/forecast/" + encodeURIComponent(cityName), 
-                loadWeather.bind(undefined, openPanel(cityName)));
+                prepareWeather.bind(undefined, openPanel(cityName)));
     });
 
     return container.append(header, thumbnail, footer);
@@ -118,7 +118,7 @@ function generateWeatherView(cityName, forecast) {
 
 function generateAnimeView(anime, episode)
 {
-    var container = $("<div class='item anime-item'></div>");
+    var container = $("<div>", {'class': 'item anime-item'});
 
     var header = $('<header>' +
                        '<a href=""><h1>' + anime.name + '</h1></a>' +
@@ -142,7 +142,7 @@ function generateAnimeView(anime, episode)
     header.click(function(event) {
         event.preventDefault();
         $.getJSON("/api/anime/" + encodeURIComponent(anime.name), 
-                loadAnimes.bind(undefined, openPanel(anime.name)));
+                prepareAnimes.bind(undefined, openPanel(anime.name)));
     });
 
 
@@ -151,7 +151,7 @@ function generateAnimeView(anime, episode)
 
 function generateSerieView(serieName, episode)
 {
-    var container = $("<div class='item serie-item'></div>");
+    var container = $("<div>", {'class': 'item serie-item'});
     var header = $('<header>' +
                    '<a href=""><h1>' + serieName + '</h1></a>' +
                    '</header>');
@@ -169,7 +169,7 @@ function generateSerieView(serieName, episode)
     header.click(function(event) {
         event.preventDefault();
         $.getJSON("/api/serie/" + encodeURIComponent(serieName),
-                loadSeries.bind(undefined, openPanel(serieName)));
+                prepareSeries.bind(undefined, openPanel(serieName)));
     });
 
 
@@ -179,7 +179,7 @@ function generateSerieView(serieName, episode)
 
 function generateVideoView(channelName, video)
 {
-    var container = $('<div class="item videoItem"></div>');
+    var container = $('<div>', {'class': 'item videoItem'});
     var header = $('<div class="header">' +
                     '<a href="">' +
                         '<h1>' + channelName + '</h1>' +
@@ -203,7 +203,7 @@ function generateVideoView(channelName, video)
     header.click(function(event) {
         event.preventDefault();
         $.getJSON("/api/youtube/" + encodeURIComponent(channelName), 
-                loadVideos.bind(undefined, openPanel(channelName)));
+                prepareVideos.bind(undefined, openPanel(channelName)));
     });
 
 
@@ -222,11 +222,11 @@ function openPanel(title) {
 }
 
 jQuery(document).ready(function($) {
-    $.getJSON("/api/youtube/",  loadVideos.bind(loadVideos, $("#videos")));
-    $.getJSON("/api/serie/",    loadSeries.bind(loadSeries, $("#series")));
-    $.getJSON("/api/anime/",    loadAnimes.bind(loadAnimes, $("#animes")));
-    $.getJSON("/api/forecast/", loadWeather.bind(loadWeather, $("#weathers")));
-    $.getJSON("/api/reddit/",   loadReddit.bind(loadReddit, $("#reddits")));
+    $.getJSON("/api/youtube/",  prepareVideos.bind(null, $("#videos")));
+    $.getJSON("/api/serie/",    prepareSeries.bind(null, $("#series")));
+    $.getJSON("/api/anime/",    prepareAnimes.bind(null, $("#animes")));
+    $.getJSON("/api/forecast/", prepareWeather.bind(null, $("#weathers")));
+    $.getJSON("/api/reddit/",   prepareReddit.bind(null, $("#reddits")));
 
 
     var contentSections = $('.cd-section'),
