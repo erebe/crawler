@@ -118,22 +118,23 @@ instance APIVerb Forecast where
   findA toFind ctx = json [city | city <- outputs ctx
                                 , toFind == T.toUpper (Weather.city city)]
 
-dispatch :: APIVerb a => String -> a ->  ActionM ()
-dispatch action service = case action of
-                               "list" -> listA service
-                               "last" -> lastA service
-                               ""     -> lastA service
-                               _      -> findA (T.toUpper . T.pack $ action) service
+dispatch :: APIVerb a => String -> String -> (a ->  ActionM ())
+dispatch action target = case action of
+                               "get" -> findA (T.toUpper . T.pack $ target) 
+                               "list" -> listA 
+                               "last" -> lastA
+                               _      -> lastA 
 
 
 runServer ::  Int -> String -> MVar [ServiceDTO] -> IO ()
 runServer port homepagePath queue = scotty port $ do
 
-    get (regex "^/api/([^/]+)/(.*)") $ do
+    get (regex "^/api/([^/]+)/([^/]+)/?(.*)") $ do
       service   <- param "1" :: ActionM String
-      action    <- param "2"  :: ActionM String
+      action    <- param "2" :: ActionM String
+      target    <- param "3" :: ActionM String
       services  <- liftIO $ readMVar queue
-      let requestResult = dispatch action <$> find ((service ==) . name) services
+      let requestResult = dispatch action target <$> find ((service ==) . name) services
 
       fromMaybe next requestResult
 

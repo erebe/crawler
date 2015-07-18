@@ -108,7 +108,7 @@ function generateWeatherView(cityName, forecast) {
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/forecast/" + encodeURIComponent(cityName), 
+        $.getJSON("/api/forecast/find/" + encodeURIComponent(cityName), 
                 prepareWeather.bind(undefined, openPanel(cityName)));
     });
 
@@ -141,7 +141,7 @@ function generateAnimeView(anime, episode)
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/anime/" + encodeURIComponent(anime.name), 
+        $.getJSON("/api/anime/find/" + encodeURIComponent(anime.name), 
                 prepareAnimes.bind(undefined, openPanel(anime.name)));
     });
 
@@ -168,7 +168,7 @@ function generateSerieView(serieName, episode)
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/serie/" + encodeURIComponent(serieName),
+        $.getJSON("/api/serie/find/" + encodeURIComponent(serieName),
                 prepareSeries.bind(undefined, openPanel(serieName)));
     });
 
@@ -202,7 +202,7 @@ function generateVideoView(channelName, video)
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/youtube/" + encodeURIComponent(channelName), 
+        $.getJSON("/api/youtube/find/" + encodeURIComponent(channelName), 
                 prepareVideos.bind(undefined, openPanel(channelName)));
     });
 
@@ -222,11 +222,11 @@ function openPanel(title) {
 }
 
 jQuery(document).ready(function($) {
-    $.getJSON("/api/youtube/",  prepareVideos.bind(null, $("#videos")));
-    $.getJSON("/api/serie/",    prepareSeries.bind(null, $("#series")));
-    $.getJSON("/api/anime/",    prepareAnimes.bind(null, $("#animes")));
-    $.getJSON("/api/forecast/", prepareWeather.bind(null, $("#weathers")));
-    $.getJSON("/api/reddit/",   prepareReddit.bind(null, $("#reddits")));
+    $.getJSON("/api/youtube/last",  prepareVideos.bind(null, $("#videos")));
+    $.getJSON("/api/serie/last",    prepareSeries.bind(null, $("#series")));
+    $.getJSON("/api/anime/last",    prepareAnimes.bind(null, $("#animes")));
+    $.getJSON("/api/forecast/last", prepareWeather.bind(null, $("#weathers")));
+    $.getJSON("/api/reddit/last",   prepareReddit.bind(null, $("#reddits")));
 
 
     var contentSections = $('.cd-section'),

@@ -14,7 +14,6 @@ import           Control.Concurrent.Thread.Delay (delay)
 import           Data.Maybe                      (fromJust)
 import           System.IO
 
-
 main :: IO ()
 main = do
     hSetBuffering stdout LineBuffering
