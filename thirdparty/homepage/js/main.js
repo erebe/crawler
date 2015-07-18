@@ -108,7 +108,7 @@ function generateWeatherView(cityName, forecast) {
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/forecast/find/" + encodeURIComponent(cityName), 
+        $.getJSON("/api/forecast/get/" + encodeURIComponent(cityName), 
                 prepareWeather.bind(undefined, openPanel(cityName)));
     });
 
@@ -141,7 +141,7 @@ function generateAnimeView(anime, episode)
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/anime/find/" + encodeURIComponent(anime.name), 
+        $.getJSON("/api/anime/get/" + encodeURIComponent(anime.name), 
                 prepareAnimes.bind(undefined, openPanel(anime.name)));
     });
 
@@ -168,7 +168,7 @@ function generateSerieView(serieName, episode)
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/serie/find/" + encodeURIComponent(serieName),
+        $.getJSON("/api/serie/get/" + encodeURIComponent(serieName),
                 prepareSeries.bind(undefined, openPanel(serieName)));
     });
 
@@ -202,7 +202,7 @@ function generateVideoView(channelName, video)
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/youtube/find/" + encodeURIComponent(channelName), 
+        $.getJSON("/api/youtube/get/" + encodeURIComponent(channelName), 
                 prepareVideos.bind(undefined, openPanel(channelName)));
     });
 
