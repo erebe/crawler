@@ -126,8 +126,8 @@ dispatch action service = case action of
                                _      -> findA (T.toUpper . T.pack $ action) service
 
 
-runServer ::  MVar [ServiceDTO] -> Int -> IO ()
-runServer queue port = scotty port $ do
+runServer ::  Int -> String -> MVar [ServiceDTO] -> IO ()
+runServer port homepagePath queue = scotty port $ do
 
     get (regex "^/api/([^/]+)/(.*)") $ do
       service   <- param "1" :: ActionM String
@@ -141,15 +141,16 @@ runServer queue port = scotty port $ do
     get "/assets/:folder/:file" $ do
       folderName <- param "folder" :: ActionM String
       fileName   <- param "file"   :: ActionM String
-      file ("thirdparty/homepage/" ++ folderName ++ "/" ++ fileName)
+      file (homepagePath <> "/" <> folderName <> "/" <> fileName)
 
     get "/favicon.ico"
-      (file "thirdparty/homepage/favicon.ico")
+      (file $ homepagePath <> "favicon.ico")
 
 
     notFound $ do
       status ok200
       setHeader "Content-type" "text/html; charset=utf-8"
-      file "thirdparty/homepage/index.html"
+      file (homepagePath <> "index.html")
+
 
 

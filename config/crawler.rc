@@ -1,13 +1,11 @@
 [application]
 listenOn = 8086
 updateFrequencyInMin = 30
-homepagePath = "thirdparty/homepage/"
-
+homepagePath = "/home/erebe/programme/haskell/crawler/thirdparty/homepage"
 
 [services]
-# ChannelID (goto youtube, click on a video, channelID in the link of the channel name)
-youtube = [ "UCLvppPP2RucGfgeoZlq68fg" # hearthstonefr
-          , "UCgsTGuH5uCyL06kKY843fgw" # trolden1337
+youtube = [ # "UCLvppPP2RucGfgeoZlq68fg" # hearthstonefr
+            "UCgsTGuH5uCyL06kKY843fgw" # trolden1337
           , "UCtR7Wal9aM7hBNOUx7J6T7w" # hsepicplays
           , "UCSk_2s9ueWpi_piryxhN-9g" # FirdornLP
           , "UC_yP2DpIgs5Y1uWC0T03Chw" # joueurdugrenier
@@ -23,12 +21,9 @@ youtube = [ "UCLvppPP2RucGfgeoZlq68fg" # hearthstonefr
           , "UCbq4WwLfbhRxvyVYOTYU25g" # UnDropDansLaMare
           , "UCm5wThREh298TkK8hCT9HuA" # datagueule
           , "UCcziTK2NKeWtWQ6kB5tmQ8Q" # epenser1
+          , "UCaTznQhurW5AaiYPbhEA-KA" # handmadehero
           ]
-
-# Name of the subreddit
-reddit = ["programming", "haskell", "unixporn", "programmerhumor"]
-
-# ShowRss.info id
+reddit = ["programming", "haskell", "java", "bigdata", "unixporn", "programmerhumor"]
 serie  = [ "962" # constantine
          , "849" # the flash 2014
          , "403" # grimm
@@ -41,7 +36,6 @@ serie  = [ "962" # constantine
          , "584" # under the dome 
          , "799" # sillicon valley
          ]
-# Haruhichan.com id
 anime = [ "613"
         , "676"
         , "703"
@@ -49,8 +43,8 @@ anime = [ "613"
         , "668" # sidonia
         , "900" # sidonia 2
 	    , "1083" # Fate Stay night 2
+	    , "1045" # Food war: Shokugeki no Souma
         ]
-# city + country
 forecast = ["valbonne,fr", "guethary,fr", "lyon,fr", "nice,fr"]
 
 

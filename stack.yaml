@@ -1,0 +1,5 @@
+flags: {}
+packages:
+- '.'
+extra-deps: ["htoml-0.1.0.2", "tasty-hspec-1.1"]
+resolver: lts-2.9

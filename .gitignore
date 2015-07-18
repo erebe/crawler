@@ -13,3 +13,4 @@ cabal.config
 *.log
 tags
 bin/
+.stack-work

@@ -6,9 +6,7 @@ After=network.target
 [Service]
 Type=simple
 User=erebe
-Environment=HOME=/home/erebe
-WorkingDirectory=/home/erebe/Programme/Haskell/crawler
-ExecStart=/home/erebe/Programme/Haskell/crawler/.cabal-sandbox/bin/crawler
+ExecStart=/home/erebe/.local/bin/crawler
 Restart=always
 #WatchdogSec=60
 #TimeoutStartSec=0

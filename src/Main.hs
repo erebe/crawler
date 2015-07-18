@@ -24,7 +24,8 @@ main = do
     guard (isJust config)
 
     let listenOn = Config.listenOn . Config.app $ fromJust config
-    spawnServiceDaemon >>= flip RestAPI.runServer listenOn
+    let homepagePath = Config.homepagePath . Config.app $ fromJust config
+    spawnServiceDaemon >>= RestAPI.runServer listenOn (homepagePath <> "/")
 
 spawnServiceDaemon :: IO (MVar [ServiceDTO])
 spawnServiceDaemon = do
