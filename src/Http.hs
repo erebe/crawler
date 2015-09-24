@@ -12,7 +12,6 @@ import           Network.HTTP.Conduit
 import           Control.Monad.Trans.Maybe    (MaybeT, runMaybeT)
 import           Control.Monad.Trans.Resource
 
-import           Control.Exception            as Ex
 import           Control.Monad                (msum)
 
 import qualified Data.ByteString.Lazy         as BL
@@ -32,7 +31,7 @@ worker :: Manager -> String -> MaybeT (ResourceT IO) BL.ByteString
 worker manager url = msum $ replicate 3 fetchPage
     where
       fetchPage = do
-          body <- liftIO $ fetchPageImpl `Ex.catch` \(e :: HttpException) -> do
+          body <- liftIO $ fetchPageImpl `catchAny` \e -> do
               hPrint stderr ((show e) <> " " <> url)
               return BL.empty
 
