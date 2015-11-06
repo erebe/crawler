@@ -56,7 +56,7 @@ parseVideo :: Value -> Maybe Video
 parseVideo = parse
   where
     seconds timeStr =  T.pack . show . utSeconds $ parseUnixTime "%FT%X" (T.encodeUtf8 timeStr)
-    format vidID = "https://www.youtube.com/v/" <> vidID <> "?vq=hd720"
+    format vidID = "https://www.youtube.com/watch?" <> vidID <> "&hd=1&vq=hd720"
     parse val = Video
                 <$> val ^? key "snippet" . key "title" . _String
                 <*> val ^? key "id" . key "videoId" . _String . to format
