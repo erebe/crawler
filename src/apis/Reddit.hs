@@ -1,3 +1,6 @@
+{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -16,18 +19,19 @@ import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Lens
 
+import           Control.DeepSeq
 
-data Topic = Topic { _title       :: T.Text
-                   , _url         :: T.Text
-                   , _commentLink :: T.Text
-                   , _thumbnail   :: T.Text
-                   , _date        :: Integer
-                   , _numComments :: Integer
-                   } deriving (Show)
+data Topic = Topic { _title       :: !Text
+                   , _url         :: !Text
+                   , _commentLink :: !Text
+                   , _thumbnail   :: !Text
+                   , _date        :: !Int
+                   , _numComments :: !Int
+                   } deriving (Show, Generic, NFData)
 
-data Reddit = Reddit { _name   :: T.Text
-                     , _topics :: [Topic]
-                     } deriving (Show)
+data Reddit = Reddit { _name   :: !Text
+                     , _topics :: !(Vector Topic)
+                     } deriving (Show, Generic, NFData)
 
 
 $(makeLenses ''Topic)
@@ -42,7 +46,7 @@ decodeAPI js = do
     v  <- decode js :: Maybe Value
     topics' <- v ^? key "data" . key "children"
 
-    return $ Reddit "kind" (parseTopics topics')
+    return $ Reddit "kind" (fromList $ parseTopics topics')
 
     where
       parseTopics v = catMaybes $ v ^.. _Array . traverse . key "data" . to parseTopic
@@ -57,6 +61,7 @@ decodeAPI js = do
 fetch :: [String] -> IO [Reddit]
 fetch subRedditNames = do
     reddits <- getPages decodeAPI (getSubRedditURL <$> subRedditNames)
-    return . catMaybes $ zipWith (\subName reddit -> (name.~ T.pack subName) <$> reddit)
-                         subRedditNames (join <$> reddits)
+    let !subs = force . catMaybes $ zipWith (\subName reddit -> (name.~ T.pack subName) <$> reddit)
+                       subRedditNames (join <$> reddits)
+    return subs
 

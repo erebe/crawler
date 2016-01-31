@@ -1,3 +1,6 @@
+{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -18,20 +21,21 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text            as T
 import qualified Data.Text.Encoding   as T
 
+import           Control.DeepSeq
 import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Lens
 
 
-data Video = Video { _title     :: T.Text
-                   , _url       :: T.Text
-                   , _thumbnail :: T.Text
-                   , _date      :: T.Text
-                   } deriving (Show, Read)
+data Video = Video { _title     :: !Text
+                   , _url       :: !Text
+                   , _thumbnail :: !Text
+                   , _date      :: !Text
+                   } deriving (Show, Read, Generic, NFData)
 
-data Channel = Channel { _name   :: T.Text
-                       , _videos :: [Video]
-                       } deriving (Show, Read)
+data Channel = Channel { _name   :: !Text
+                       , _videos :: !(Vector Video)
+                       } deriving (Show, Read, Generic, NFData)
 
 
 
@@ -69,9 +73,10 @@ decodeAPI string = do
     let title' =  v ^? nth 0 . key "snippet" . key "channelTitle" . _String
     let vids = catMaybes $ v ^.. _Array . traverse . to parseVideo
 
-    Channel <$> title' <*> return vids
+    Channel <$> title' <*> return (fromList vids)
 
 fetch :: [String] -> IO [Channel]
 fetch channelIds = do
     channels <- getPages decodeAPI (getChannelURL <$> channelIds)
-    return . catMaybes $ join <$> channels
+    let !channels' = force . catMaybes $ join <$> channels
+    return channels'

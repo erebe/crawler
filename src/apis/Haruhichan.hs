@@ -1,3 +1,6 @@
+{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -20,17 +23,19 @@ import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Lens
 
-
-data Episode = Episode { _title     :: T.Text
-                       , _magnetURI :: T.Text
-                       , _date      :: T.Text
-                       } deriving (Show)
+import           Control.DeepSeq
 
 
-data Anime = Anime { _name      :: T.Text
-                   , _thumbnail :: T.Text
-                   , _episodes  :: [Episode]
-                   } deriving (Show)
+data Episode = Episode { _title     :: !Text
+                       , _magnetURI :: !Text
+                       , _date      :: !Text
+                       } deriving (Show, Generic, NFData)
+
+
+data Anime = Anime { _name      :: !Text
+                   , _thumbnail :: !Text
+                   , _episodes  :: !(Vector Episode)
+                   } deriving (Show, Generic, NFData)
 
 $(makeLenses ''Episode)
 $(makeLenses ''Anime)
@@ -45,7 +50,7 @@ decodeAPI js = do
     Anime
       <$> v ^? key "name" . _String
       <*> v ^? key "malimg" . _String
-      <*> return (parseEpisodes v)
+      <*> (return . fromList) (parseEpisodes v)
 
     where
       parseEpisodes v = catMaybes $ v ^.. key "episodes" . _Array . traverse . to parseEpisode
@@ -59,6 +64,6 @@ decodeAPI js = do
 fetch :: [String] -> IO [Anime]
 fetch animeIds = do
     animes <- getPages decodeAPI (getAnimeURL <$> animeIds)
-
-    return $ catMaybes (join <$> animes)
+    let !ff =  catMaybes $ join <$> animes
+    return ff
 

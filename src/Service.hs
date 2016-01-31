@@ -22,6 +22,7 @@ import qualified ShowRss
 import qualified Youtube
 
 import           ClassyPrelude
+import           Control.DeepSeq
 import           Data.Time
 import           Data.UnixTime
 import           System.Timeout
