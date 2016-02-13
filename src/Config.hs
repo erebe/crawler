@@ -16,6 +16,7 @@ import           System.Directory          (doesFileExist, getHomeDirectory)
 
 import           Text.Toml
 import           Text.Toml.Types
+import Data.HList
 
 instance FromJSON Config where
     parseJSON (Object v) = do
@@ -26,19 +27,10 @@ instance FromJSON Config where
                 <*> appObj .:? "homepagePath" .!= "thirdparty/homepage/"
         servicesObj <- v .: "services"
 
-        let servicesNames = ["youtube", "reddit", "serie", "anime", "forecast"]
-        let servicesBuilders = [ \ins -> YoutubeDTO <$> mkYoutube ins
-                               , \ins -> RedditDTO <$> mkReddit ins
-                               , \ins -> SerieDTO <$> mkSerie ins
-                               , \ins -> AnimeDTO <$> mkAnime ins
-                               , \ins -> ForecastDTO <$> mkForecast ins
-                               ]
+        let helper str = servicesObj .:? str .!= [] 
+        servicesFetchers <- hSequence $ buildFrom (Proxy :: Proxy ['Youtube, 'Reddit]) helper
 
-        services' <- forM (zip servicesBuilders servicesNames) $
-                    \(builder, ins) -> fmap builder (servicesObj .:? ins .!= [])
-
-
-        return $ MkConfig app' services'
+        return $ MkConfig app' servicesFetchers
 
     parseJSON _ = mzero
 
@@ -52,7 +44,7 @@ data Application = Application {
 
 data Config = MkConfig {
       app           :: Application
-    , subscriptions :: [IO ServiceDTO]
+    , subscriptions :: ServicesFetchers ['Youtube, 'Reddit]
     }
 
 load :: IO (Maybe Config)

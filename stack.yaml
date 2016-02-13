@@ -1,9 +1,7 @@
 flags: {}
+extra-package-dbs: []
 packages:
 - '.'
-- location:
-    git: git@github.com:cies/htoml
-    commit: 8f8dc5e92571bc51055f4df35533a3fd2a23e691
- 
-extra-deps: ["tasty-hspec-1.1"]
-resolver: lts-3.4
+extra-deps:
+- htoml-0.1.0.3
+resolver: lts-5.1

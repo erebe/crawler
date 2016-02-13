@@ -19,7 +19,7 @@ Executable          crawler
                         ,transformers, resourcet, lens
                         ,directory, unbounded-delays
                         ,aeson, lens-aeson, tagsoup, htoml
-                        ,text, bytestring
+                        ,text, bytestring, HList
                         ,time, unix-time, classy-prelude, deepseq
 
 --Library
