@@ -11,8 +11,18 @@ build-type:          Simple
 
 Executable          crawler
     hs-source-dirs:       src src/apis
-    ghc-options:         -Wall -O3 -threaded -XNoImplicitPrelude
+    ghc-options:         -Wall -O3 -threaded
     --ghc-prof-options:-prof -fprof-auto -rtsopts
+    other-modules:      Config
+                        , Haruhichan
+                        , Http
+                        , OpenWeather
+                        , Reddit
+                        , RestAPI
+                        , Service
+                        , ShowRss
+                        , Youtube
+
     main-is:             Main.hs
     Build-Depends:       base, async
                         ,scotty, http-conduit, http-types

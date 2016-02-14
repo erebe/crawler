@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -14,9 +15,9 @@ import           Data.Aeson.Types
 import           Data.Text.IO              (readFile)
 import           System.Directory          (doesFileExist, getHomeDirectory)
 
+import           Data.HList
 import           Text.Toml
 import           Text.Toml.Types
-import Data.HList
 
 instance FromJSON Config where
     parseJSON (Object v) = do
@@ -27,8 +28,8 @@ instance FromJSON Config where
                 <*> appObj .:? "homepagePath" .!= "thirdparty/homepage/"
         servicesObj <- v .: "services"
 
-        let helper str = servicesObj .:? str .!= [] 
-        servicesFetchers <- hSequence $ buildFrom (Proxy :: Proxy ['Youtube, 'Reddit]) helper
+        let helper str = servicesObj .:? str .!= []
+        servicesFetchers <- hSequence $ buildFrom (Proxy :: Proxy ['Youtube, 'Reddit, 'Serie, 'Anime]) helper
 
         return $ MkConfig app' servicesFetchers
 
@@ -44,7 +45,7 @@ data Application = Application {
 
 data Config = MkConfig {
       app           :: Application
-    , subscriptions :: ServicesFetchers ['Youtube, 'Reddit]
+    , subscriptions :: ServicesFetchers ['Youtube, 'Reddit, 'Serie, 'Anime]
     }
 
 load :: IO (Maybe Config)

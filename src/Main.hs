@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -11,6 +12,7 @@ import           Service
 
 import           Control.Concurrent.Async        (async)
 import           Control.Concurrent.Thread.Delay (delay)
+import           Data.HList
 import           Data.Maybe                      (fromJust)
 import           System.IO
 
@@ -26,9 +28,9 @@ main = do
     let homepagePath = Config.homepagePath . Config.app $ fromJust config
     spawnServiceDaemon >>= RestAPI.runServer listenOn (homepagePath <> "/")
 
-spawnServiceDaemon :: IO (MVar [ServiceDTO])
+spawnServiceDaemon :: IO (MVar (Services ['Youtube, 'Reddit, 'Serie, 'Anime]))
 spawnServiceDaemon = do
-    channel <- newMVar []
+    channel <- newMVar (Nothing .*. Nothing .*. Nothing .*. Nothing .*. HNil)
     _ <- async $ runDaemon channel
     return channel
 

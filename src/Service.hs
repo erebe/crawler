@@ -23,22 +23,23 @@ module Service
 
 -- import qualified Eztv
 import qualified Haruhichan
-import qualified OpenWeather
+-- import qualified OpenWeather
 import qualified Reddit                   as R
 import qualified ShowRss
 import qualified Youtube                  as Y
 
 import           ClassyPrelude
-import           Control.DeepSeq
 import           Data.HList
-import           Data.Proxy
 import           Data.Time
 import           Data.UnixTime
 import           System.Timeout
 
 import           Control.Concurrent.Async (Async, async, wait)
 
-data ServiceKind =  Youtube | Reddit | Serie | Anime | Forecast deriving (Enum, Eq, Ord, Show)
+
+type ServicesFetchers services = HList (SList IO services)
+type Services services = HList (SList Maybe services)
+data ServiceKind =  Youtube | Reddit | Serie | Anime | Forecast deriving (Enum, Eq, Ord, Show, Read)
 data ServiceT (serviceType :: ServiceKind) input output =
     MkService {
                lastUpdate :: UnixTime
@@ -68,9 +69,16 @@ instance Fetchable 'Reddit  where
     name _ = "reddit"
     fetcher _ = R.fetch
 
+instance Fetchable 'Serie  where
+    type Ret 'Serie = ShowRss.Serie
+    name _ = "serie"
+    fetcher _ = ShowRss.fetch
 
-type ServicesFetchers services = HList (SList IO services)
-type Services services = HList (SList Maybe services)
+instance Fetchable 'Anime  where
+    type Ret 'Anime = Haruhichan.Anime
+    name _ = "anime"
+    fetcher _ = Haruhichan.fetch
+
 
 type family SList m (ss :: [ServiceKind]) :: [*] where
     SList m '[] = '[]
@@ -91,7 +99,6 @@ instance (Fetchable x, SBuilder m xs) => SBuilder m (x ': xs) where
     buildFrom _ getInput = fetch <$> (getInput $ name (Proxy :: Proxy x))
                         `HCons` buildFrom (Proxy :: Proxy xs) getInput
 
-
 timeoutAfterMin :: forall a. Int -> IO a -> IO (Maybe a)
 timeoutAfterMin nbMin = let micro = (6 :: Int) in timeout (10^micro * 60 * nbMin)
 
@@ -103,7 +110,8 @@ data Hwait = Hwait
 instance (io ~ IO (Maybe a), x ~ Async (Maybe a)) => ApplyAB Hwait x io where
   applyAB _ = wait
 
-updateServices :: ServicesFetchers ['Youtube, 'Reddit] -> IO (Services ['Youtube, 'Reddit])
+updateServices :: ServicesFetchers ['Youtube, 'Reddit, 'Serie, 'Anime]
+               -> IO (Services ['Youtube, 'Reddit, 'Serie, 'Anime])
 updateServices services = do
   putStrLn "---------------------------------------------------"
   putStrLn . ("Start fetching :: " ++ ) . tshow =<< getLocalTime
