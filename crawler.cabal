@@ -30,7 +30,7 @@ Executable          crawler
                         ,directory, unbounded-delays
                         ,aeson, lens-aeson, tagsoup, htoml
                         ,text, bytestring, HList
-                        ,time, unix-time, classy-prelude, deepseq
+                        ,time, unix-time, classy-prelude
 
 --Library
 --    ghc-options:     -O3 -Wall

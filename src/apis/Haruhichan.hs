@@ -1,6 +1,4 @@
 {-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -23,19 +21,16 @@ import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Lens
 
-import           Control.DeepSeq
-
-
 data Episode = Episode { _title     :: !Text
                        , _magnetURI :: !Text
                        , _date      :: !Text
-                       } deriving (Show, Generic, NFData)
+                       } deriving (Show)
 
 
 data Anime = Anime { _name      :: !Text
                    , _thumbnail :: !Text
                    , _episodes  :: !(Vector Episode)
-                   } deriving (Show, Generic, NFData)
+                   } deriving (Show)
 
 $(makeLenses ''Episode)
 $(makeLenses ''Anime)

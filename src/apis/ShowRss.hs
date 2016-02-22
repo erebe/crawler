@@ -1,6 +1,4 @@
 {-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
@@ -22,16 +20,14 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text            as T
 import qualified Data.Text.Encoding   as T
 
-import           Control.DeepSeq
-
 data Episode = Episode { _title     :: !Text
                        , _magnetURI :: !Text
                        , _date      :: !Int
-                       } deriving (Show, Generic, NFData)
+                       } deriving (Show)
 
 data Serie = Serie { _name     :: !Text
                    , _episodes :: !(Vector Episode)
-                   } deriving (Show, Generic, NFData)
+                   } deriving (Show)
 
 $(makeLenses ''Episode)
 $(makeLenses ''Serie)
@@ -66,7 +62,7 @@ fetch :: [String] -> IO [Serie]
 fetch seriesIds = do
     series <- getPages (extractData . T.decodeUtf8 . BL.toStrict) (craftUrl <$> seriesIds)
 
-    let !series' = force . catMaybes $ join <$> series
+    let !series' = catMaybes $ join <$> series
     return series'
 
 

@@ -1,6 +1,4 @@
 {-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -21,7 +19,6 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text            as T
 import qualified Data.Text.Encoding   as T
 
-import           Control.DeepSeq
 import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Lens
@@ -31,11 +28,11 @@ data Video = Video { _title     :: !Text
                    , _url       :: !Text
                    , _thumbnail :: !Text
                    , _date      :: !Text
-                   } deriving (Show, Read, Generic, NFData)
+                   } deriving (Show)
 
 data Channel = Channel { _name   :: !Text
                        , _videos :: !(Vector Video)
-                       } deriving (Show, Read, Generic, NFData)
+                       } deriving (Show)
 
 
 
@@ -78,5 +75,5 @@ decodeAPI string = do
 fetch :: [String] -> IO [Channel]
 fetch channelIds = do
     channels <- getPages decodeAPI (getChannelURL <$> channelIds)
-    let !channels' = force . catMaybes $ join <$> channels
+    let !channels' = catMaybes $ join <$> channels
     return channels'

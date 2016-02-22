@@ -1,6 +1,4 @@
 {-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -19,7 +17,6 @@ import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Lens
 
-import           Control.DeepSeq
 
 data Topic = Topic { _title       :: !Text
                    , _url         :: !Text
@@ -27,11 +24,11 @@ data Topic = Topic { _title       :: !Text
                    , _thumbnail   :: !Text
                    , _date        :: !Int
                    , _numComments :: !Int
-                   } deriving (Show, Generic, NFData)
+                   } deriving (Show)
 
 data Reddit = Reddit { _name   :: !Text
                      , _topics :: !(Vector Topic)
-                     } deriving (Show, Generic, NFData)
+                     } deriving (Show)
 
 
 $(makeLenses ''Topic)
@@ -61,7 +58,7 @@ decodeAPI js = do
 fetch :: [String] -> IO [Reddit]
 fetch subRedditNames = do
     reddits <- getPages decodeAPI (getSubRedditURL <$> subRedditNames)
-    let !subs = force . catMaybes $ zipWith (\subName reddit -> (name.~ T.pack subName) <$> reddit)
+    let !subs = catMaybes $ zipWith (\subName reddit -> (name.~ T.pack subName) <$> reddit)
                        subRedditNames (join <$> reddits)
     return subs
 

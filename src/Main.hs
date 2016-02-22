@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -41,5 +42,6 @@ spawnServiceDaemon = do
         guard (isJust cfg)
 
         services <- updateServices (Config.subscriptions (fromJust cfg))
-        _ <- swapMVar channel services
+        let !ss = services
+        _ <- swapMVar channel ss
         rescheduleIn . toInteger . Config.updateFrequencyInMin . Config.app $ fromJust cfg
