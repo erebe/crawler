@@ -22,6 +22,7 @@ Executable          crawler
                         , Service
                         , ShowRss
                         , Youtube
+                        , Eztv
 
     main-is:             Main.hs
     Build-Depends:       base, async

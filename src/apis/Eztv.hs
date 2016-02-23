@@ -1,43 +1,34 @@
-{--
-
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Eztv ( Serie()
-            , name, episodes
-            , Episode()
-            , title, magnetURI, date, link, fileName
-            , fetchSeries
-            ) where
+               , name, episodes, thumbnail
+               , Episode()
+               , title, magnetURI, date
+               , fetch
+               ) where
 
-import           Http(getPages)
-
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.ByteString.Lazy.Char8 as BLC
-
-import           Text.HTML.TagSoup
-
-import           Control.Monad
-import           Data.Maybe
-
-import           Data.UnixTime
+import           ClassyPrelude
+import           Http                 (getPages)
 
 import           Control.Lens
-import           Data.List
+import           Text.HTML.TagSoup
 
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.Text            as T
+import qualified Data.Text.Encoding   as T
 
-data Episode = Episode { _title      :: T.Text
-                        ,_magnetURI :: String
-                        ,_date      :: UnixTime
-                        ,_link      :: String
-                        ,_fileName  :: String
+data Episode = Episode { _title     :: !Text
+                       , _magnetURI :: !Text
+                       , _date      :: !Int
+                       } deriving (Show)
 
-                        } deriving (Show)
-
-data Serie = Serie { _name :: String
-                    ,_episodes  :: [Episode]
-
+data Serie = Serie { _name      :: !Text
+                   , _thumbnail :: !Text
+                   , _episodes  :: !(Vector Episode)
                    } deriving (Show)
 
 $(makeLenses ''Episode)
@@ -45,45 +36,34 @@ $(makeLenses ''Serie)
 
 
 
-extractData :: BL.ByteString -> [Episode]
+extractData :: Text -> Maybe Serie
 extractData xmlStr = do
     let tags = parseTagsOptions parseOptionsFast xmlStr
-    let items = partitions (~== "<item>") tags
-    catMaybes $ mkEpisode <$> items
+    let showname = extractTextFromTag "<span itemprop='name'>" tags
+    let thumb = fromAttrib (T.pack "src") <$> find (~== "<img itemprop='image' src>") tags
+    let items = filter (~== "<a class='magnet'>") tags
+    let episodes' = mkEpisode <$> items
+
+    Serie <$> showname
+          <*> ((\l -> (T.pack baseUrl) <> l) <$> thumb)
+          <*> return (fromList episodes')
 
     where
         extractTextFromTag tag tags = maybeTagText =<< (listToMaybe . drop 1 $ dropWhile (~/= tag) tags)
-        mkEpisode tags = Episode <$> (T.decodeUtf8 . BL.toStrict <$> extractTextFromTag "<title>" tags)
-                                 <*> (BLC.unpack <$> extractTextFromTag "<magnetURI>" tags )
-                                 <*> (parseUnixTime webDateFormat . BL.toStrict <$> extractTextFromTag "<pubDate>" tags )
-                                 <*> (BLC.unpack . fromAttrib (BLC.pack "url") <$> find (~== "<enclosure>") tags)
-                                 <*> (BLC.unpack <$> extractTextFromTag "<fileName>" tags)
+        mkEpisode tag = Episode (fst . T.breakOn (T.pack "Magnet") . fromAttrib (T.pack "title") $ tag)
+                                (fromAttrib (T.pack "href") tag)
+                                (3)
 
+baseUrl :: String
+baseUrl  = "https://eztv.ag"
 
-craftEzrssUrl :: String -> String
-craftEzrssUrl names = protocol ++ baseUrl ++ buildArgs
-    where
-        protocol  = "http://"
-        baseUrl   = "ezrss.it/search/index.php"
-        args      = [ ("simple", "")
-                     ,("mode", "rss")
-                     ,("show_name_exact", "true")
-                     ,("show_name", names)
-                    ]
-        buildArgs = '?' : ( drop 1 . join $
-                            (\(x, y) -> "&" ++ x ++ "=" ++ y ) <$> args
-                          )
+craftUrl :: String -> String
+craftUrl idx = baseUrl <> "/shows/" <> idx
 
-fetchSeries :: [String] -> IO [Serie]
-fetchSeries seriesNames = do
-    episodes' <- getPages extractData (craftEzrssUrl <$> seriesNames)
-    let series = (\(nameS, eps) -> name .~ nameS
-                                 $ episodes .~ fromMaybe [] eps
-                                 $ Serie "" []
-                 )
-                <$> zip seriesNames episodes'
+fetch :: [String] -> IO [Serie]
+fetch seriesIds = do
+    series <- getPages (extractData . T.decodeUtf8 . BL.toStrict) (craftUrl <$> seriesIds)
 
-    return series
+    let !series' = catMaybes $ join <$> series
+    return series'
 
-
---}

@@ -59,19 +59,29 @@ thead, h1 {
 .serie-item {
     display: inline-block;
     vertical-align: top;
-    margin : 10px;
-    width  : 300px;
-    height : 100px;
+    margin   : 10px;
+    width    : 250px;
+    height   : 420px;
 }
 
-.serie-item header
-{
-    height: 30%;
+.serie-item header {
+    height: 10%;
+    text-align: center;
 }
 
-.serie-item footer
-{
+.serie-item footer {
+    height: 20%;
+    text-align: center;
+}
+
+.serie-item img {
+    height:100%;
+    width: 100%;
+}
+.serie-item .thumbnail {
     height: 70%;
+    padding: 5px;
+    background-color: #BDA3AD;
 }
 
 /* -------------------------------------

@@ -16,7 +16,7 @@ import           Service
 import qualified Haruhichan                as Anime
 import qualified OpenWeather               as Weather
 import qualified Reddit                    as R
-import qualified ShowRss                   as Serie
+import qualified Eztv                      as Serie
 import qualified Youtube                   as Y
 
 import           Control.Lens              hiding ((.=))

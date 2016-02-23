@@ -59,7 +59,7 @@ function prepareSeries(container, json)
                      .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
                      .map(function(serie) {
                         return serie.episodes.map(function(episode) {
-                            return generateSerieView (serie.name, episode);
+                            return generateSerieView (serie, episode);
 
                         });
                     });
@@ -149,12 +149,18 @@ function generateAnimeView(anime, episode)
     return container.append(header, thumbnail, footer);
 }
 
-function generateSerieView(serieName, episode)
+function generateSerieView(serie, episode)
 {
     var container = $("<div>", {'class': 'item serie-item'});
     var header = $('<header>' +
-                   '<a href=""><h1>' + serieName + '</h1></a>' +
+                   '<a href=""><h1>' + serie.name + '</h1></a>' +
                    '</header>');
+
+    var thumbnail = $('<div class="thumbnail">' +
+                        '<a href="' + episode.magnetURI + '">' +
+                        '<img src="' + serie.thumbnail + '" /></a>' +
+                      '</div>'
+                     );
 
     var date = new Date(episode.date * 1000);
     var footer = $('<footer class="footer">' +
@@ -168,12 +174,12 @@ function generateSerieView(serieName, episode)
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/serie/get/" + encodeURIComponent(serieName),
-                prepareSeries.bind(undefined, openPanel(serieName)));
+        $.getJSON("/api/serie/get/" + encodeURIComponent(serie.name),
+                prepareSeries.bind(undefined, openPanel(serie.name)));
     });
 
 
-    return container.append(header, footer);
+    return container.append(header, thumbnail, footer);
 
 }
 

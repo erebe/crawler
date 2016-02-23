@@ -21,11 +21,11 @@ module Service
        --         )
        where
 
--- import qualified Eztv
+import qualified Eztv
 import qualified Haruhichan
 -- import qualified OpenWeather
 import qualified Reddit                   as R
-import qualified ShowRss
+-- import qualified ShowRss
 import qualified Youtube                  as Y
 
 import           ClassyPrelude
@@ -70,9 +70,9 @@ instance Fetchable 'Reddit  where
     fetcher _ = R.fetch
 
 instance Fetchable 'Serie  where
-    type Ret 'Serie = ShowRss.Serie
+    type Ret 'Serie = Eztv.Serie
     name _ = "serie"
-    fetcher _ = ShowRss.fetch
+    fetcher _ = Eztv.fetch
 
 instance Fetchable 'Anime  where
     type Ret 'Anime = Haruhichan.Anime
@@ -96,7 +96,7 @@ instance Applicative m => SBuilder m ('[]) where
 
 
 instance (Fetchable x, SBuilder m xs) => SBuilder m (x ': xs) where
-    buildFrom _ getInput = fetch <$> (getInput $ name (Proxy :: Proxy x))
+    buildFrom _ getInput = fetch <$> getInput (name (Proxy :: Proxy x))
                         `HCons` buildFrom (Proxy :: Proxy xs) getInput
 
 timeoutAfterMin :: forall a. Int -> IO a -> IO (Maybe a)
@@ -123,7 +123,7 @@ updateServices services = do
   putStrLn . ("Done fetching :: " ++ ) . tshow =<< getLocalTime
   putStrLn "---------------------------------------------------"
 
-  return $ services'
+  return services'
 
   where
     getLocalTime = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
