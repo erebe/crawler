@@ -24,10 +24,17 @@ main = do
 
     config <- Config.load
     guard (isJust config)
+    args <- getArgs
 
-    let listenOn = Config.listenOn . Config.app $ fromJust config
-    let homepagePath = Config.homepagePath . Config.app $ fromJust config
-    spawnServiceDaemon >>= RestAPI.runServer listenOn (homepagePath <> "/")
+    case args of
+        ["--oneshot"] -> updateServices (Config.subscriptions (fromJust config)) >>= ClassyPrelude.print
+        _             -> spawnServiceDaemon >>= runRestServer (fromJust config)
+
+runRestServer :: Config.Config -> MVar (Services ['Youtube, 'Reddit, 'Serie, 'Anime]) -> IO ()
+runRestServer cfg = RestAPI.runServer listenOn (homepagePath <> "/")
+  where
+    listenOn = Config.listenOn . Config.app $ cfg
+    homepagePath = Config.homepagePath . Config.app $ cfg
 
 spawnServiceDaemon :: IO (MVar (Services ['Youtube, 'Reddit, 'Serie, 'Anime]))
 spawnServiceDaemon = do
