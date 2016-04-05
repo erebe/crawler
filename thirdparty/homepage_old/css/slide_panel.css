@@ -1,11 +1,12 @@
-/* -------------------------------- 
-
-Main components 
-
--------------------------------- */
 
 .cd-main-content {
   text-align: center;
+}
+.cd-main-content h1 {
+  font-size: 20px;
+  font-size: 1.25rem;
+  color: #64788c;
+  padding: 4em 0;
 }
 .cd-main-content .cd-btn {
   position: relative;

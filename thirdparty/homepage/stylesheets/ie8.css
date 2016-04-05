@@ -1,0 +1,53 @@
+/*
+	Hyperspace by HTML5 UP
+	html5up.net | @n33co
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+*/
+/* Type */
+/* line 14, ../sass/ie8.scss */
+body, input, select, textarea {
+  color: #ffffff;
+}
+
+/* Button */
+/* line 20, ../sass/ie8.scss */
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+button,
+.button {
+  position: relative;
+}
+/* line 27, ../sass/ie8.scss */
+input[type="submit"]:after,
+input[type="reset"]:after,
+input[type="button"]:after,
+button:after,
+.button:after {
+  display: none;
+}
+
+/* Features */
+/* line 34, ../sass/ie8.scss */
+.features {
+  border: solid 1px;
+}
+
+/* Form */
+/* line 40, ../sass/ie8.scss */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="tel"],
+select,
+textarea {
+  background: transparent;
+  border: solid 1px;
+}
+
+/* Split */
+/* line 54, ../sass/ie8.scss */
+.split.style1 > :first-child {
+  padding-right: 2em;
+  width: 70%;
+}

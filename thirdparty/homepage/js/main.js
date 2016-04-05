@@ -1,298 +1,210 @@
-'use strict';
-
-function prepareReddit(container, json)
-{
-    var subs = json.filter(function(sub) { return sub.topics.length; } )
-                   .map(function(sub) {
-                       var table = $("<table class='item reddit-item'><thead><tr><th>"
-				    + "<h1><a href='https://reddit.com/r/" + sub.name + "'>"+ sub.name +"</a></h1>"
-				    + "</th></tr></thead></table>"
-				    );
-                        return table.append.apply(table, sub.topics.map(function(topic) {
-                            return generateRedditView(sub.name, topic); }));
-                     });
-
-    container.append.apply(container, subs);
+/*
+	Hyperspace by HTML5 UP
+	html5up.net | @n33co
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+*/
+
+(function($) {
 
-}
+	skel.breakpoints({
+		xlarge:	'(max-width: 1680px)',
+		large:	'(max-width: 1280px)',
+		medium:	'(max-width: 980px)',
+		small:	'(max-width: 736px)',
+		xsmall:	'(max-width: 480px)'
+	});
 
-function prepareWeather(container, json)
-{
-    var weathers = json.filter(function(city) { return city.forecasts.length; } )
-                     .map(function(city) {
-                         return city.forecasts.map(function(forecast) {
-                             return generateWeatherView(city.city, forecast); });
-                     });
+	$(function() {
 
-    container.append.apply(container, weathers);
-}
+		var	$window = $(window),
+			$body = $('body'),
+			$sidebar = $('#sidebar');
 
-function prepareAnimes(container, json)
-{
-    var animes = json.filter(function(anime) { return anime.episodes.length; } )
-                     .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
-                     .map(function(anime) {
-                         return anime.episodes.map(function(episode) {
-                             return generateAnimeView(anime, episode); });
-                     });
-
-
-    container.append.apply(container, animes);
-}
-
-function prepareVideos(container, json)
-{
-    var videos = json.filter(function(channel) { return channel.videos.length; } )
-                     .map(function(channel) {
-                         return channel.videos.map(function(video) {
-                             return generateVideoView(channel.name, video); });
-                     });
-
-
-    container.append.apply(container, videos);
+		// Hack: Enable IE flexbox workarounds.
+			if (skel.vars.IEVersion < 12)
+				$body.addClass('is-ie');
 
-}
-
-function prepareSeries(container, json)
-{
-    var series = json.filter(function(serie) { return serie.episodes.length} )
-                     .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
-                     .map(function(serie) {
-                        return serie.episodes.map(function(episode) {
-                            return generateSerieView (serie, episode);
-
-                        });
-                    });
-
-
-    container.append.apply(container, series);
-
-}
-
-
-function generateRedditView(subName, topic)
-{
-    var generateThumbnail = function(topic) {
-        var url = topic.thumbnail;
-        return (url.length && url != "self") ?
-            '<a href="'+ topic.url + '"><img style="vertical-align: middle;" src="' + url  + '"/></a>'
-            : "⇒";
-    }
-
-
-    var row = $('<tr>');
-    var cell = $('<th>');
-    var row_bullet = $('<th>', {"class": "bullet", html: generateThumbnail(topic)});
-    var link = $('<a href="' + topic.url + '"><b>'+ topic.title + '</b></a>' +
-        '<br/><a style="font-size:12px;" href="'+ topic.commentLink + '"> ' + topic.numComments + ' comments </a>');
-
-    cell.append(link);
-    return row.append.apply(row, [row_bullet, cell]);
-}
-
-function generateWeatherView(cityName, forecast) {
-
-    var container = $('<div>', {'class': 'item weather-item'});
-    var header = $('<header><h1>' + cityName + '</h1></header>')
-
-    var thumbnail = $('<div class="thumbnail">' +
-                        '<img src="' + forecast.iconUrl + '"/>' +
-                      '</div>'
-                     );
-
-     var footer = $('<footer>' +
-                        '<h3>' + forecast.temperature + 'C°  ' + forecast.description + '</h3>' +
-                        '<a>' + forecast.date + '</a>' +
-                    '</footer>');
-
-
-    header.click(function(event) {
-        event.preventDefault();
-        $.getJSON("/api/forecast/get/" + encodeURIComponent(cityName), 
-                prepareWeather.bind(undefined, openPanel(cityName)));
-    });
-
-    return container.append(header, thumbnail, footer);
-}
-
-
-function generateAnimeView(anime, episode)
-{
-    var container = $("<div>", {'class': 'item anime-item'});
-
-    var header = $('<header>' +
-                       '<a href=""><h1>' + anime.name + '</h1></a>' +
-                   '</header>'
-                  );
-
-    var thumbnail = $('<div class="thumbnail">' +
-                        '<a href="' + episode.magnetURI + '">' +
-                        '<img src="' + anime.thumbnail + '" /></a>' +
-                      '</div>'
-                     );
-
-    var date = new Date(episode.date * 1000);
-    var footer = $('<footer>' +
-                     '<a href="' + episode.magnetURI + '">' +
-                         '<h3>' + episode.title + '</h3>' +
-                         '<h3>' + date.toLocaleDateString() + '</h3>' +
-                     '</a>' +
-                   '</footer>');
-
-    header.click(function(event) {
-        event.preventDefault();
-        $.getJSON("/api/anime/get/" + encodeURIComponent(anime.name), 
-                prepareAnimes.bind(undefined, openPanel(anime.name)));
-    });
-
-
-    return container.append(header, thumbnail, footer);
-}
-
-function generateSerieView(serie, episode)
-{
-    var container = $("<div>", {'class': 'item serie-item'});
-    var header = $('<header>' +
-                   '<a href=""><h1>' + serie.name + '</h1></a>' +
-                   '</header>');
-
-    var thumbnail = $('<div class="thumbnail">' +
-                        '<a href="' + episode.magnetURI + '">' +
-                        '<img src="' + serie.thumbnail + '" /></a>' +
-                      '</div>'
-                     );
-
-    var date = new Date(episode.date * 1000);
-    var footer = $('<footer class="footer">' +
-                        '<a href="' + episode.magnetURI + '">' +
-                            '<h3>' + episode.title + '</h3>' +
-                            '<h3>' + date.toLocaleDateString() + '</h3>' +
-                        '</a>' +
-                    '</footer>'
-                   );
-
-
-    header.click(function(event) {
-        event.preventDefault();
-        $.getJSON("/api/serie/get/" + encodeURIComponent(serie.name),
-                prepareSeries.bind(undefined, openPanel(serie.name)));
-    });
-
-
-    return container.append(header, thumbnail, footer);
-
-}
-
-function generateVideoView(channelName, video)
-{
-    var container = $('<div>', {'class': 'item videoItem'});
-    var header = $('<div class="header">' +
-                    '<a href="">' +
-                        '<h1>' + channelName + '</h1>' +
-                    '</a>' +
-                    '</div>'
-                  );
-
-    var thumbnail = $('<div class="thumbnail">' +
-                       '<a href="' + video.url + '">' +
-                           '<img src="' + video.thumbnail + '"/>' +
-                       '</a>' +
-                     '</div>'
-                    );
-
-    var footer = $('<div class="footer">' +
-                     '<a href="' + video.url + '">' +  video.title + '</a>' +
-                   '</div>'
-                 );
-
-
-    header.click(function(event) {
-        event.preventDefault();
-        $.getJSON("/api/youtube/get/" + encodeURIComponent(channelName), 
-                prepareVideos.bind(undefined, openPanel(channelName)));
-    });
-
-
-    return container.append(header, thumbnail, footer);
-}
-
-function openPanel(title) {
-    $(".cd-panel-header-title").html(title);
-    var panel = $(".cd-panel-content");
-    panel.empty();
-    panel.animate({ scrollTop: 0 }, 0);
-    $('.cd-panel').addClass('is-visible');
-
-    return panel;
-
-}
-
-jQuery(document).ready(function($) {
-    $.getJSON("/api/youtube/last",  prepareVideos.bind(null, $("#videos")));
-    $.getJSON("/api/serie/last",    prepareSeries.bind(null, $("#series")));
-    $.getJSON("/api/anime/last",    prepareAnimes.bind(null, $("#animes")));
-    $.getJSON("/api/forecast/last", prepareWeather.bind(null, $("#weathers")));
-    $.getJSON("/api/reddit/last",   prepareReddit.bind(null, $("#reddits")));
-
-
-    var contentSections = $('.cd-section'),
-        navigationItems = $('#cd-vertical-nav a');
-
-    updateNavigation();
-    $(window).on('scroll', function(){
-        updateNavigation();
-    });
-
-    //open the lateral panel
-    $('.cd-btn').on('click', function(event){
-        event.preventDefault();
-        $('.cd-panel').addClass('is-visible');
-    });
-    //clode the lateral panel
-    $('.cd-panel').on('click', function(event){
-        if( $(event.target).is('.cd-panel') || $(event.target).is('.cd-panel-close') ) {
-            $('.cd-panel').removeClass('is-visible');
-            event.preventDefault();
-        }
-    });
-    //smooth scroll to the section
-    navigationItems.on('click', function(event){
-        event.preventDefault();
-        smoothScroll($(this.hash));
-    });
-    //smooth scroll to second section
-    $('.cd-scroll-down').on('click', function(event){
-        event.preventDefault();
-        smoothScroll($(this.hash));
-    });
-
-    //open-close navigation on touch devices
-    $('.touch .cd-nav-trigger').on('click', function(){
-        $('.touch #cd-vertical-nav').toggleClass('open');
-
-    });
-    //close navigation on touch devices when selectin an elemnt from the list
-    $('.touch #cd-vertical-nav a').on('click', function(){
-        $('.touch #cd-vertical-nav').removeClass('open');
-    });
-
-    function updateNavigation() {
-        contentSections.each(function(){
-            var th = $(this);
-            var activeSection = $('#cd-vertical-nav a[href="#'+th.attr('id')+'"]').data('number') - 1;
-            if ( ( th.offset().top - $(window).height()/2 < $(window).scrollTop() ) && ( th.offset().top + th.height() - $(window).height()/2 > $(window).scrollTop() ) ) {
-                navigationItems.eq(activeSection).addClass('is-selected');
-            }else {
-                navigationItems.eq(activeSection).removeClass('is-selected');
-            }
-        });
-    }
-
-    function smoothScroll(target) {
-        $('body,html').animate(
-            {'scrollTop':target.offset().top},
-            600
-        );
-    }
-
-});
+		// Disable animations/transitions until the page has loaded.
+			if (skel.canUse('transition'))
+				$body.addClass('is-loading');
+
+			$window.on('load', function() {
+				window.setTimeout(function() {
+					$body.removeClass('is-loading');
+				}, 100);
+			});
+
+		// Forms.
+
+			// Fix: Placeholder polyfill.
+				$('form').placeholder();
+
+			// Hack: Activate non-input submits.
+				$('form').on('click', '.submit', function(event) {
+
+					// Stop propagation, default.
+						event.stopPropagation();
+						event.preventDefault();
+
+					// Submit form.
+						$(this).parents('form').submit();
+
+				});
+
+		// Prioritize "important" elements on medium.
+			skel.on('+medium -medium', function() {
+				$.prioritize(
+					'.important\\28 medium\\29',
+					skel.breakpoint('medium').active
+				);
+			});
+
+		// Sidebar.
+			if ($sidebar.length > 0) {
+
+				var $sidebar_a = $sidebar.find('a');
+
+				$sidebar_a
+					.addClass('scrolly')
+					.on('click', function() {
+
+						var $this = $(this);
+
+						// External link? Bail.
+							if ($this.attr('href').charAt(0) != '#')
+								return;
+
+						// Deactivate all links.
+							$sidebar_a.removeClass('active');
+
+						// Activate link *and* lock it (so Scrollex doesn't try to activate other links as we're scrolling to this one's section).
+							$this
+								.addClass('active')
+								.addClass('active-locked');
+
+					})
+					.each(function() {
+
+						var	$this = $(this),
+							id = $this.attr('href'),
+							$section = $(id);
+
+						// No section for this link? Bail.
+							if ($section.length < 1)
+								return;
+
+						// Scrollex.
+							$section.scrollex({
+								mode: 'middle',
+								top: '-20vh',
+								bottom: '-20vh',
+								initialize: function() {
+
+									// Deactivate section.
+										if (skel.canUse('transition'))
+											$section.addClass('inactive');
+
+								},
+								enter: function() {
+
+									// Activate section.
+										$section.removeClass('inactive');
+
+									// No locked links? Deactivate all links and activate this section's one.
+										if ($sidebar_a.filter('.active-locked').length == 0) {
+
+											$sidebar_a.removeClass('active');
+											$this.addClass('active');
+
+										}
+
+									// Otherwise, if this section's link is the one that's locked, unlock it.
+										else if ($this.hasClass('active-locked'))
+											$this.removeClass('active-locked');
+
+								}
+							});
+
+					});
+
+			}
+
+		// Scrolly.
+			$('.scrolly').scrolly({
+				speed: 1000,
+				offset: function() {
+
+					// If <=large, >small, and sidebar is present, use its height as the offset.
+						if (skel.breakpoint('large').active
+						&&	!skel.breakpoint('small').active
+						&&	$sidebar.length > 0)
+							return $sidebar.height();
+
+					return 0;
+
+				}
+			});
+
+		// Spotlights.
+			$('.spotlights > section')
+				.scrollex({
+					mode: 'middle',
+					top: '-10vh',
+					bottom: '-10vh',
+					initialize: function() {
+
+						// Deactivate section.
+							if (skel.canUse('transition'))
+								$(this).addClass('inactive');
+
+					},
+					enter: function() {
+
+						// Activate section.
+							$(this).removeClass('inactive');
+
+					}
+				})
+				.each(function() {
+
+					var	$this = $(this),
+						$image = $this.find('.image'),
+						$img = $image.find('img'),
+						x;
+
+					// Assign image.
+						$image.css('background-image', 'url(' + $img.attr('src') + ')');
+
+					// Set background position.
+						if (x = $img.data('position'))
+							$image.css('background-position', x);
+
+					// Hide <img>.
+						$img.hide();
+
+				});
+
+		// Features.
+			if (skel.canUse('transition'))
+				$('.features')
+					.scrollex({
+						mode: 'middle',
+						top: '-20vh',
+						bottom: '-20vh',
+						initialize: function() {
+
+							// Deactivate section.
+								$(this).addClass('inactive');
+
+						},
+						enter: function() {
+
+							// Activate section.
+								$(this).removeClass('inactive');
+
+						}
+					});
+
+	});
+
+})(jQuery);

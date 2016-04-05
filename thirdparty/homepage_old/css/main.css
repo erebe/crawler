@@ -1,0 +1,179 @@
+section {
+    clear : left;
+}
+
+thead, h1 {
+    text-transform: capitalize;
+}
+
+.item  h1 {
+    font-weight: 400;
+    font-size: 20px;
+}
+
+/* -------------------------------------
+ * VIDEO
+ * -------------------------------------
+ */
+
+.videoItem {
+    display: inline-block;
+    vertical-align: top;
+    margin : 10px;
+    width  : 300px;
+    height : 300px;
+}
+
+.videoItem  h1,a {
+    color: #BDA3AD;
+}
+
+
+.videoItem .header {
+    height: 10%;
+    text-align: center;
+}
+
+.videoItem .thumbnail {
+    height: 70%;
+    padding: 5px;
+    background-color: #BDA3AD;
+}
+
+.videoItem img {
+    height:100%;
+    width: 100%;
+}
+
+.videoItem .footer {
+    height: 20%;
+    text-align: center;
+}
+
+
+/* -------------------------------------
+ * Serie
+ * -------------------------------------
+ */
+
+.serie-item {
+    display: inline-block;
+    vertical-align: top;
+    margin   : 10px;
+    width    : 250px;
+    height   : 420px;
+}
+
+.serie-item header {
+    height: 10%;
+    text-align: center;
+}
+
+.serie-item footer {
+    height: 20%;
+    text-align: center;
+}
+
+.serie-item img {
+    height:100%;
+    width: 100%;
+}
+.serie-item .thumbnail {
+    height: 70%;
+    padding: 5px;
+    background-color: #BDA3AD;
+}
+
+/* -------------------------------------
+ * Anime
+ * -------------------------------------
+ */
+
+.anime-item {
+    display: inline-block;
+    vertical-align: top;
+    margin   : 10px;
+    width    : 250px;
+    height   : 420px;
+}
+
+.anime-item header {
+    height: 10%;
+    text-align: center;
+}
+
+.anime-item footer {
+    height: 20%;
+    text-align: center;
+}
+
+.anime-item img {
+    height:100%;
+    width: 100%;
+}
+.anime-item .thumbnail {
+    height: 70%;
+    padding: 5px;
+    background-color: #BDA3AD;
+}
+
+
+/* -------------------------------------
+ * Anime
+ * -------------------------------------
+ */
+
+.weather-item {
+    display: inline-block;
+    vertical-align: top;
+    margin   : 10px;
+    width    : 250px;
+    height   : 150px;
+    text-align: center;
+}
+
+.weather-item .thumbnail {
+    height: 50%;
+    width: 30%;
+    padding: 5px;
+    background-color: #BDA3AD;
+    margin: auto;
+}
+
+.weather-item footer {
+    height: 20%;
+    text-align: center;
+}
+
+.weather-item img {
+    height:100%;
+    width: 100%;
+}
+
+
+/* -------------------------------------
+ * Reddit
+ * -------------------------------------
+ */
+.reddit-item {
+    display: inline-block;
+    vertical-align: top;
+    margin   : 20px;
+    width    : 800px;
+    text-align: left;
+    table-layout:fixed;
+}
+
+.reddit-item th {
+    padding-top: 5px;
+}
+.reddit-item .bullet  {
+
+    display: inline;
+    margin-right: 10px;
+    text-align: center;
+}
+
+b {
+    font-weight: bold;
+}
