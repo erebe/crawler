@@ -100,9 +100,9 @@ dispatch action target = case action of
 
 getService :: Text -> Services ['Youtube, 'Reddit, 'Serie, 'Anime] -> String -> String -> Maybe (ActionM ())
 getService ((name (Proxy :: Proxy 'Youtube) ==) -> True) l action target = dispatch action target <$> (hOccursFst l :: Maybe (Service 'Youtube))
-getService ((name (Proxy :: Proxy 'Reddit) ==) -> True) l action target = dispatch action target <$> (hOccursFst l :: Maybe (Service 'Reddit))
-getService ((name (Proxy :: Proxy 'Serie) ==) -> True) l action target = dispatch action target <$> (hOccursFst l :: Maybe (Service 'Serie))
-getService ((name (Proxy :: Proxy 'Anime) ==) -> True) l action target = dispatch action target <$> (hOccursFst l :: Maybe (Service 'Anime))
+getService ((name (Proxy :: Proxy 'Reddit)  ==) -> True) l action target = dispatch action target <$> (hOccursFst l :: Maybe (Service 'Reddit))
+getService ((name (Proxy :: Proxy 'Serie)   ==) -> True) l action target = dispatch action target <$> (hOccursFst l :: Maybe (Service 'Serie))
+getService ((name (Proxy :: Proxy 'Anime)   ==) -> True) l action target = dispatch action target <$> (hOccursFst l :: Maybe (Service 'Anime))
 getService _ _ _ _ = Nothing
 
 
