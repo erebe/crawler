@@ -123,6 +123,10 @@ runServer port homepagePath queue = scotty port $ do
     get "/assets/:folder/:file" $ do
       folderName <- param "folder" :: ActionM String
       fileName   <- param "file"   :: ActionM String
+
+      when (".css" `isSuffixOf` fileName) $ setHeader "Content-type" "text/css; charset=utf-8"
+      when (".js" `isSuffixOf` fileName)  $ setHeader "Content-type" "text/javascript; charset=utf-8"
+
       file (homepagePath <> "/" <> folderName <> "/" <> fileName)
 
     get "/favicon.ico"
@@ -133,6 +137,3 @@ runServer port homepagePath queue = scotty port $ do
       status ok200
       setHeader "Content-type" "text/html; charset=utf-8"
       file (homepagePath <> "index.html")
-
-
-
