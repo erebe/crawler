@@ -81,8 +81,8 @@ function generateRedditView(subName, topic)
 
 
     var row = $('<tr>');
-    var cell = $('<th>');
-    var row_bullet = $('<th>', {"class": "bullet", html: generateThumbnail(topic)});
+    var cell = $('<td>');
+    var row_bullet = $('<td>', {"class": "bullet", html: generateThumbnail(topic)});
     var link = $('<a href="' + topic.url + '"><b>'+ topic.title + '</b></a>' +
         '<br/><a style="font-size:12px;" href="'+ topic.commentLink + '"> ' + topic.numComments + ' comments </a>');
 
