@@ -5,9 +5,9 @@ function prepareReddit(container, json)
     var subs = json.filter(function(sub) { return sub.topics.length; } )
                    .map(function(sub) {
                        var table = $("<table class='item reddit-item'><thead><tr><th>"
-				    + "<h1><a href='https://reddit.com/r/" + sub.name + "'>"+ sub.name +"</a></h1>"
-				    + "</th></tr></thead></table>"
-				    );
+                                      + "<h1><a href='https://reddit.com/r/" + sub.name + "'>"+ sub.name +"</a></h1>"
+                                      + "</th></tr></thead></table>"
+                                    );
                         return table.append.apply(table, sub.topics.map(function(topic) {
                             return generateRedditView(sub.name, topic); }));
                      });
@@ -77,7 +77,7 @@ function generateRedditView(subName, topic)
         return (url.length && url != "self") ?
             '<a href="'+ topic.url + '"><img style="vertical-align: middle;" src="' + url  + '"/></a>'
             : "";
-    }
+    };
 
 
     var row = $('<tr>');
@@ -93,7 +93,7 @@ function generateRedditView(subName, topic)
 function generateWeatherView(cityName, forecast) {
 
     var container = $('<div>', {'class': 'item weather-item'});
-    var header = $('<header><h1>' + cityName + '</h1></header>')
+    var header = $('<header><h1>' + cityName + '</h1></header>');
 
     var thumbnail = $('<div class="thumbnail">' +
                         '<img src="' + forecast.iconUrl + '"/>' +
@@ -108,7 +108,7 @@ function generateWeatherView(cityName, forecast) {
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/forecast/get/" + encodeURIComponent(cityName), 
+        $.getJSON("/api/forecast/get/" + encodeURIComponent(cityName),
                 prepareWeather.bind(undefined, openPanel(cityName)));
     });
 
@@ -141,7 +141,7 @@ function generateAnimeView(anime, episode)
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/anime/get/" + encodeURIComponent(anime.name), 
+        $.getJSON("/api/anime/get/" + encodeURIComponent(anime.name),
                 prepareAnimes.bind(undefined, openPanel(anime.name)));
     });
 
@@ -208,7 +208,7 @@ function generateVideoView(channelName, video)
 
     header.click(function(event) {
         event.preventDefault();
-        $.getJSON("/api/youtube/get/" + encodeURIComponent(channelName), 
+        $.getJSON("/api/youtube/get/" + encodeURIComponent(channelName),
                 prepareVideos.bind(undefined, openPanel(channelName)));
     });
 
