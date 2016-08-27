@@ -1,4 +1,9 @@
-# Personnal Crawler
+
+<p align="center">
+  <img src="https://github.com/erebe/crawler/raw/master/logo.png" alt="logo"/>
+</p>
+
+## Description
 
 I use this programme to provide me with REST api/website homepage for the various sites that I read
 Crawl every x min for the informations
