@@ -1,0 +1,26 @@
+proxy_cache_path /tmp/cache keys_zone=cache:10m levels=1:2 inactive=600s max_size=100m;
+    
+server {
+    listen *:443 http2 ssl;         
+    listen [::]:443 http2 ssl;     
+    server_name api.erebe.eu;     
+    server_tokens off;    
+    root /tmp/;
+
+    # individual nginx logs for this gitlab vhost
+    access_log  /var/log/nginx/api_access.log;
+    error_log   /var/log/nginx/api_error.log;
+
+    proxy_cache cache;
+    proxy_cache_valid 200 5m;
+
+    location / {
+        proxy_http_version 1.1; # Always upgrade to HTTP/1.1
+        proxy_set_header Connection ""; # Enable keepalives
+        proxy_set_header Accept-Encoding ""; # Optimize encoding
+        proxy_pass http://127.0.0.1:{{ listen_port }};
+    }
+
+    ssl_certificate /etc/nginx/ssl/server.crt;
+    ssl_certificate_key /etc/nginx/ssl/server.key; 
+}

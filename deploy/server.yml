@@ -1,0 +1,82 @@
+- hosts: server
+  remote_user: root
+
+  vars:
+    user: crawler
+    listen_port: 8086
+
+  tasks:
+    ################################
+    # APP
+    ################################
+    - name: Create user {{ user }}
+      user: name={{ user }}
+            comment="{{ user }} user"
+            shell=/bin/false
+            createhome=yes
+
+    - name: Install crawler app
+      copy: src=config/crawler
+            dest=/usr/local/bin/
+            owner={{ user }}
+            group={{ user }}
+            mode=u=rx,g-rwx,o-rwx
+
+    - name: Install crawler webpages
+      copy: src=../thirdparty/homepage
+            dest=/home/{{ user }}/
+            owner={{ user }}
+            group={{ user }}
+            mode=u=rx,g-rwx,o-rwx
+
+    - name: create config dir
+      file: path=/home/{{ user }}/.config 
+            owner={{ user }}
+            group={{ user }}
+            state=directory mode=0700
+
+    - name: Add {{ user }} config
+      template: src=config/crawler.rc
+                dest=/home/{{ user }}/.config/
+                owner={{ user }}
+                group={{ user }}
+                mode=u=r,g-rwx,o-rwx
+
+    ################################
+    # NGINX
+    ################################
+    - name: Add nginx config
+      template: src=config/api.nginx
+                dest=/etc/nginx/sites-available/
+      notify: reload nginx
+
+    - name: Symlink nginx config
+      file: src=/etc/nginx/sites-available/api.nginx
+            dest=/etc/nginx/sites-enabled/api
+            state=link
+
+    - name: Nginx started
+      service: name=nginx state=started enabled=true
+
+
+    ################################
+    # SYSTEMD
+    ################################
+    - name: Copy systemd service
+      template: src=config/crawler.service
+                dest=/usr/lib/systemd/system/
+      notify: reload crawler
+    
+    - name: reload systemd
+      command: systemctl daemon-reload
+
+    - name: crawler started
+      service: name=crawler state=started enabled=true
+
+
+  handlers:
+    - name: reload nginx
+      service: name=nginx state=reloaded enabled=true
+
+    - name: reload crawler
+      service: name=crawler state=restarted enabled=true

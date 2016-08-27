@@ -1,0 +1,15 @@
+[Unit]
+Description=Homepage provider
+Wants=network.target
+After=network.target
+
+[Service]
+Type=simple
+User=crawler
+ExecStart=/usr/local/bin/crawler
+Restart=always
+#WatchdogSec=60
+#TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
