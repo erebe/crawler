@@ -363,12 +363,13 @@
         }
 
         jQuery(document).ready(function($) {
+            $("#container-center > div").hide();
+            $("#container-center > div:nth-child(1)").show();
+
             $.getJSON("/api/youtube/last",  prepareVideos.bind(null, $("#youtube")));
             $.getJSON("/api/serie/last",    prepareSeries.bind(null, $("#series")));
             $.getJSON("/api/reddit/last",   prepareReddit.bind(null, $("#reddit ")));
 
-            $("#container-center > div").hide();
-            $("#container-center > div:nth-child(1)").show();
 
 
             $(document).keydown(function(ev) {
