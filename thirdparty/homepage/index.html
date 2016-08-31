@@ -406,6 +406,7 @@
                 $("nav ul li:nth-child(" + pos + ") a").addClass("active");
                 $("#container-center > div").hide();
                 $("#container-center > div:nth-child(" + pos + ")").show();
+                $(document).scrollTop(0);
                 ev.preventDefault();
             });
 
@@ -417,6 +418,7 @@
                 var pos = $("nav ul li a").index($("nav ul li a[class*='active']")) + 1;
                 $("#container-center > div").hide();
                 $("#container-center > div:nth-child(" + pos + ")").show();
+                $(document).scrollTop(0);
                 ev.preventDefault();
 
             });
