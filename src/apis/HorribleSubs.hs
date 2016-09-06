@@ -55,7 +55,7 @@ extractData time xmlStr = do
     episodes' <- flip (maybe (return mempty)) showId $ \showId' -> do
       let showNumber = takeWhile isDigit . dropWhile (not .isDigit) . T.unpack . fromTagText $ showId'
       items <- getPages (parseTagsOptions parseOptionsFast) [apiUrl showNumber]
-      let items'   = partitions (tagOpen (== (BLC.pack "tr")) null) (fromMaybe mempty (headMay $ catMaybes items))
+      let items'   = partitions (tagOpen (== BLC.pack "tr") null) (fromMaybe mempty (headMay $ catMaybes items))
       return $ mkEpisode <$> items'
 
 

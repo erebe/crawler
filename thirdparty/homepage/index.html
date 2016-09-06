@@ -161,6 +161,32 @@
         border: none;
     }
 
+    /* -------------------------------------
+    * Anime
+    * -------------------------------------
+    */
+
+    .anime-item header {
+        height: 10%;
+        text-align: center;
+    }
+
+    .anime-item footer {
+        height: 20%;
+        text-align: center;
+    }
+
+    .anime-item img {
+        height:100%;
+        width: 100%;
+    }
+    .anime-item .thumbnail {
+        height: 70%;
+        padding: 5px;
+        background-color: #312450;
+        border: none;
+    }
+
     </style>
   </head>
   <body>
@@ -286,6 +312,39 @@
 
         }
 
+        function generateAnimeView(anime, episode)
+        {
+            var container = $("<div>", {'class': 'item anime-item col-sm-6 col-md-2'});
+
+            var header = $('<header>' +
+                            '<a href=""><h5>' + anime.name + '</h5></a>' +
+                        '</header>'
+                        );
+
+            var thumbnail = $('<div class="thumbnail">' +
+                                '<a href="' + episode.magnetURI + '">' +
+                                '<img src="' + anime.thumbnail + '" /></a>' +
+                            '</div>'
+                            );
+
+            var date = new Date(episode.date * 1000);
+            var footer = $('<footer>' +
+                            '<a href="' + episode.magnetURI + '">' +
+                                '<a>' + episode.title + '</a><br/>' +
+                                '<a>' + date.toLocaleDateString() + '</a>' +
+                            '</a>' +
+                        '</footer>');
+
+            header.click(function(event) {
+                event.preventDefault();
+                $.getJSON("/api/anime/get/" + encodeURIComponent(anime.name),
+                        prepareAnimes.bind(undefined, openPanel(anime.name)));
+            });
+
+
+            return container.append(header, thumbnail, footer);
+        }
+
         function prepareVideos(container, json)
         {
             var videos = json.filter(function(channel) { return channel.videos.length; } )
@@ -307,6 +366,28 @@
 
             container.append.apply(container, dom);
 
+        }
+
+        function prepareAnimes(container, json)
+        {
+            var animes = json.filter(function(anime) { return anime.episodes.length; } )
+                            .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
+                            .map(function(anime) {
+                                return anime.episodes.map(function(episode) {
+                                    return generateAnimeView(anime, episode); });
+                            });
+
+
+            var dom = [];
+            $.each(animes, function(ix, el ) {
+                var i = Math.floor(ix / 4);
+                if(dom[i] === undefined) {
+                    dom[i] = $("<div>", {"class" : "row"});
+                }
+                dom[i].append(el);
+
+            });
+            container.append.apply(container, dom);
         }
 
         function prepareSeries(container, json)
@@ -382,8 +463,9 @@
             $("#container-center > div:nth-child(1)").show();
 
             $.getJSON("/api/youtube/last",  prepareVideos.bind(null, $("#youtube")));
+            $.getJSON("/api/anime/last",   prepareAnimes.bind(null, $("#anime")));
             $.getJSON("/api/serie/last",    prepareSeries.bind(null, $("#series")));
-            $.getJSON("/api/reddit/last",   prepareReddit.bind(null, $("#reddit ")));
+            /* $.getJSON("/api/reddit/last",   prepareReddit.bind(null, $("#reddit")));*/
 
 
 
