@@ -1,0 +1,103 @@
+{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TemplateHaskell   #-}
+
+module HorribleSubs ( Episode()
+                  , title, magnetURI, date
+                  , Anime()
+                  , name, thumbnail, episodes
+                  , fetch
+                  ) where
+
+
+import           ClassyPrelude
+import           Http                 (getPages)
+
+import           Control.Lens         hiding (ix)
+import           Text.HTML.TagSoup
+
+import           Control.DeepSeq
+import qualified Data.ByteString.Lazy as BL
+import           Data.Char
+import qualified Data.Text            as T
+import qualified Data.Text.Encoding   as T
+import           Data.UnixTime
+import Prelude (read)
+
+
+data Episode = Episode { _title     :: !Text
+                       , _magnetURI :: !Text
+                       , _date      :: !Int
+                       } deriving (Show, Generic, NFData)
+
+
+data Anime = Anime { _name      :: !Text
+                   , _thumbnail :: !Text
+                   , _episodes  :: !(Vector Episode)
+                   } deriving (Show, Generic, NFData)
+
+
+$(makeLenses ''Episode)
+$(makeLenses ''Anime)
+
+
+extractData :: UnixTime -> Text -> Maybe Anime
+extractData time xmlStr = do
+    let tags = parseTagsOptions parseOptionsFast xmlStr
+    let showname = extractTextFromTag "<span itemprop='name'>" tags
+    let thumb = fromAttrib (T.pack "src") <$> find (~== "<img itemprop='image' src>") tags
+    let items = filter (~== "<a class='magnet'>") tags
+    let episodes' = mkEpisode <$> zip items (getDates tags)
+
+    Anime <$> showname
+          <*> ((\l -> (T.pack baseUrl) <> l) <$> thumb)
+          <*> return (fromList episodes')
+
+    where
+        extractTextFromTag tag tags = maybeTagText =<< (listToMaybe . drop 1 $ dropWhile (~/= tag) tags)
+        getDates tags = catMaybes $ extractTextFromTag "<td class='forum_thread_post'>". snd
+                                 <$> (filter (\(ix, _) -> ix `mod` 5 == 0)
+                                             (zip ([1..]:: [Int]) (partitions (~== "<td class='forum_thread_post'>") tags)))
+
+        mkEpisode (tag, dateStr) = Episode (fst . T.breakOn (T.pack "Magnet") . fromAttrib (T.pack "title") $ tag)
+                                (fromAttrib (T.pack "href") tag)
+                                (fromEnum (utSeconds time) - (parseDate $ T.unpack dateStr))
+
+parseDate :: String -> Int
+parseDate str = let (nb, rest) = span isDigit (dropWhile isSpace str)
+                in if null nb
+                   then 0
+                   else let (coef, rest') = parseToken rest
+                        in ((read nb :: Int) * coef) + parseDate rest'
+    where
+        parseToken " week"  = (3600 * 24 * 7, "")
+        parseToken " weeks" = (3600 * 24 * 7, "")
+        parseToken " mo"    = (3600 * 24 * 30, "")
+        parseToken " year"  = (3600 * 24 * 365, "")
+        parseToken " years" = (3600 * 24 * 365, "")
+        parseToken ('d':xs) = (3600 * 24, xs)
+        parseToken ('h':xs) = (3600, xs)
+        parseToken ('m':_) = (60, "")
+        parseToken _ = (0, "")
+
+
+
+baseUrl :: String
+baseUrl = "http://horriblesubs.info/shows/"
+
+craftUrl :: String -> String
+craftUrl animeName = baseUrl <> animeName
+
+
+-- craftUrl :: String -> String
+-- craftUrl idx = "http://horriblesubs.info/lib/getshows.php?type=show&showid=" <> idx <> "&nextid=0"
+
+fetch :: [String] -> IO [Anime]
+fetch seriesIds = do
+    time <- getUnixTime
+    series <- getPages (extractData time . T.decodeUtf8 . BL.toStrict) (craftUrl <$> seriesIds)
+
+    let !series' = force . catMaybes $ join <$> series
+    return series'
