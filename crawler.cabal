@@ -23,6 +23,7 @@ Executable          crawler
                         , ShowRss
                         , Youtube
                         , Eztv
+                        , HorribleSubs
 
     main-is:             Main.hs
     Build-Depends:       base, async
@@ -36,4 +37,3 @@ Executable          crawler
 --Library
 --    ghc-options:     -O3 -Wall
     --ghc-prof-options:-prof -fprof-auto -rtsopts
-

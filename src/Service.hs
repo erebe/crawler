@@ -22,7 +22,7 @@ module Service
        where
 
 import qualified Eztv
-import qualified Haruhichan
+import qualified HorribleSubs
 -- import qualified OpenWeather
 import qualified Reddit                   as R
 -- import qualified ShowRss
@@ -75,9 +75,9 @@ instance Fetchable 'Serie  where
     fetcher _ = Eztv.fetch
 
 instance Fetchable 'Anime  where
-    type Ret 'Anime = Haruhichan.Anime
+    type Ret 'Anime = HorribleSubs.Anime
     name _ = "anime"
-    fetcher _ = Haruhichan.fetch
+    fetcher _ = HorribleSubs.fetch
 
 
 type family SList m (ss :: [ServiceKind]) :: [*] where
@@ -127,4 +127,3 @@ updateServices services = do
 
   where
     getLocalTime = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
-

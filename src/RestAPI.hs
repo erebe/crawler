@@ -13,7 +13,7 @@ module RestAPI (runServer) where
 import           ClassyPrelude
 import           Service
 
-import qualified Haruhichan                as Anime
+import qualified HorribleSubs                as Anime
 import qualified OpenWeather               as Weather
 import qualified Reddit                    as R
 import qualified Eztv                      as Serie
