@@ -21,6 +21,7 @@
             owner={{ user }}
             group={{ user }}
             mode=u=rx,g-rwx,o-rwx
+      notify: reload crawler
 
     - name: Install crawler webpages
       copy: src=../thirdparty/homepage
