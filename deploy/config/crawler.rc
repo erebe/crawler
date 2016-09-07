@@ -3,6 +3,7 @@ listenOn = {{ listen_port }}
 updateFrequencyInMin = 30
 homepagePath = "/home/{{ user }}/homepage"
 
+
 [services]
 youtube = [  # "UCLvppPP2RucGfgeoZlq68fg" # hearthstonefr
             "UCgsTGuH5uCyL06kKY843fgw" # trolden1337
@@ -61,6 +62,9 @@ anime = [
         , "boku-dake-ga-inai-machi"
         , "dimension-w"
         , "re-zero-kara-hajimeru-isekai-seikatsu"
+        , "tales-of-zestiria-the-x"
+        , "berserk"
+        , "naruto-shippuuden"
         ]
 # forecast = ["valbonne,fr", "guethary,fr", "lyon,fr", "nice,fr"]
 

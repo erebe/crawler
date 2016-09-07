@@ -41,6 +41,7 @@
                 owner={{ user }}
                 group={{ user }}
                 mode=u=r,g-rwx,o-rwx
+      notify: reload crawler
 
     ################################
     # NGINX
