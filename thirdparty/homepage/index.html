@@ -484,6 +484,7 @@
                 var len = $("nav ul li a").length;
                 var pos = $("nav ul li a").index($("nav ul li a[class*='active']"));
                 pos = 1 + ((pos + op) % len);
+                pos = (pos <= 0) ? len : pos;
                 $("nav ul li a").removeClass("active");
                 $("nav ul li:nth-child(" + pos + ") a").addClass("active");
                 $("#container-center > div").hide();
