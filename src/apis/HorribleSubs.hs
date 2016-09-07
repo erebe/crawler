@@ -61,7 +61,7 @@ extractData _ xmlStr = do
       let datesRaws = innerText . getTagContent (BLC.pack "td") (anyAttrValueLit (BLC.pack "rls-label"))  <$> partitions (~== "<td class='rls-label'>") tags'
       let dates =  parseUnixTime (BC.pack "%D") . BL.toStrict . BLC.takeWhile (/= '(') . BLC.dropWhile (== '(') <$> datesRaws
       let datesList = foldMap (replicate 3) dates :: [UnixTime]
-      return $ mkEpisode <$> items' <*> datesList
+      return $ mkEpisode <$> zip items' datesList
 
 
     return $ Anime <$> showname
@@ -70,7 +70,7 @@ extractData _ xmlStr = do
 
     where
         extractTextFromTag tag tags = maybeTagText =<< (listToMaybe . drop 1 $ dropWhile (~/= tag) tags)
-        mkEpisode tag date = Episode (T.decodeUtf8 . BL.toStrict . innerText . getTagContent (BLC.pack "td") (anyAttrValueLit (BLC.pack "dl-label")) $ tag)
+        mkEpisode (tag,date) = Episode (T.decodeUtf8 . BL.toStrict . innerText . getTagContent (BLC.pack "td") (anyAttrValueLit (BLC.pack "dl-label")) $ tag)
                                      (T.decodeUtf8 . BL.toStrict . fromMaybe mempty $ fromAttrib (BLC.pack "href") <$> find (~== "<a title='Magnet Link'>") tag)
                                      date
 
