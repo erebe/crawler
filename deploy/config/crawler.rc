@@ -48,28 +48,20 @@ serie  = [ "1128/constantine/"     # "962" # constantine
          , "1342/the-expanse/"     
          , "1250/mr-robot/" 
          ]
-#anime = [ "613"
-#        , "676"
-#        , "703"
-#        , "620" # No game no Life
-#        , "668" # sidonia
-#        , "900" # sidonia 2
-#	    , "1083" # Fate Stay night 2
-#	    , "1045" # Food war: Shokugeki no Souma
-#        , "1018" # God eater
-#        , "1101" # Gate
-#        , "1342" # Gate 2
-#        , "1164" # Overlord
-#        , "1194" # Rokka no Yuusha
-#        , "1178" # Noragami
-#        , "1235" # Owari no Seraph
-#        , "1157" # One punch man
-#        , "1346" # Boku Dake
-#        , "1276" # Dimension W
-#        , "1494" # koutetsujou-no-cabaneri
-#        , "1479" # rezero kara hajimeru isekai seikatsu
-#        , "1477" # Bungou stray dogs
-#        ]
+anime = [ 
+         "no-game-no-life"
+	    , "fate-stay-night-unlimited-blade-works"
+	    , "shokugeki-no-soma"
+        , "god-eater"
+        , "gate" 
+        , "overlord"
+        , "maoyuu-maou-yuusha"
+        , "noragami" 
+        , "one-punch-man"
+        , "boku-dake-ga-inai-machi"
+        , "dimension-w"
+        , "re-zero-kara-hajimeru-isekai-seikatsu"
+        ]
 # forecast = ["valbonne,fr", "guethary,fr", "lyon,fr", "nice,fr"]
 
 
