@@ -1,10 +1,15 @@
 {-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DeriveAnyClass        #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE KindSignatures        #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE PolyKinds             #-}
+{-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
@@ -24,101 +29,79 @@ module Service
 import qualified Eztv
 import qualified HorribleSubs
 -- import qualified OpenWeather
-import qualified Reddit                   as R
+import qualified Reddit        as R
 -- import qualified ShowRss
-import qualified Youtube                  as Y
+import qualified Youtube       as Y
 
 import           ClassyPrelude
-import           Data.HList
+import           Data.Proxy
 import           Data.Time
-import           Data.UnixTime
-import           System.Timeout
-
-import           Control.Concurrent.Async (Async, async, wait)
+-- import           Data.UnixTime
+-- import           System.Timeout
 
 
-type ServicesFetchers services = HList (SList IO services)
-type Services services = HList (SList Maybe services)
-data ServiceKind =  Youtube | Reddit | Serie | Anime | Forecast deriving (Enum, Eq, Ord, Show, Read)
-data ServiceT (serviceType :: ServiceKind) input output =
-    MkService {
-               lastUpdate :: UnixTime
-              ,inputs     :: [input]
-              ,outputs    :: [output]
-              } deriving (Show)
 
-type Service (k :: ServiceKind) = ServiceT k String (Ret k)
-class Fetchable (k :: ServiceKind) where
-    type Ret k
-    name :: Proxy k -> Text
-    fetcher :: Proxy k -> [String] -> IO [Ret k]
+data ServiceKind =  Youtube | Reddit | Serie | Anime deriving (Enum, Eq, Ord, Show, Read)
 
-    fetch :: [String] -> IO (Service k)
-    fetch ins = MkService
-                <$> getUnixTime
-                <*> return ins
-                <*> fetcher (Proxy :: Proxy k) ins
-
-instance Fetchable 'Youtube  where
-    type Ret 'Youtube = Y.Channel
-    name _ = "youtube"
-    fetcher _ = Y.fetch
-
-instance Fetchable 'Reddit  where
-    type Ret 'Reddit = R.Reddit
-    name _ = "reddit"
-    fetcher _ = R.fetch
-
-instance Fetchable 'Serie  where
-    type Ret 'Serie = Eztv.Serie
-    name _ = "serie"
-    fetcher _ = Eztv.fetch
-
-instance Fetchable 'Anime  where
-    type Ret 'Anime = HorribleSubs.Anime
-    name _ = "anime"
-    fetcher _ = HorribleSubs.fetch
+type family ServiceData (k :: ServiceKind)  where
+  ServiceData 'Youtube = Y.Channel
+  ServiceData 'Reddit = R.Reddit
+  ServiceData 'Anime = HorribleSubs.Anime
+  ServiceData 'Serie = Eztv.Serie
 
 
-type family SList m (ss :: [ServiceKind]) :: [*] where
-    SList m '[] = '[]
-    SList m (x ': xs) = m (Service x) ': SList m xs
-
-type family SListA m (ss :: [ServiceKind]) :: [*] where
-    SListA m '[] = '[]
-    SListA m (x ': xs) = m (IO (Service x)) ': SListA m xs
-
-class Applicative m => SBuilder m ss where
-    buildFrom :: Proxy ss -> (Text -> m [String]) -> HList (SListA m ss)
-
-instance Applicative m => SBuilder m ('[]) where
-    buildFrom _ _ = HNil
+type family ServiceInput (k :: ServiceKind) where
+  ServiceInput 'Youtube =  String
+  ServiceInput 'Reddit = String
+  ServiceInput 'Anime = String
+  ServiceInput 'Serie = String
 
 
-instance (Fetchable x, SBuilder m xs) => SBuilder m (x ': xs) where
-    buildFrom _ getInput = fetch <$> getInput (name (Proxy :: Proxy x))
-                        `HCons` buildFrom (Proxy :: Proxy xs) getInput
+data Service (k :: ServiceKind) = Show (ServiceData k) => Service [ServiceData k]
 
-timeoutAfterMin :: forall a. Int -> IO a -> IO (Maybe a)
-timeoutAfterMin nbMin = let micro = (6 :: Int) in timeout (10^micro * 60 * nbMin)
+instance Show (Service k) where
+  show (Service d) = show d
 
-data HAsync = HAsync
-instance (io ~ IO (Async (Maybe a)), x ~ IO a) => ApplyAB HAsync x io where
-  applyAB _ = async . timeoutAfterMin 10
 
-data Hwait = Hwait
-instance (io ~ IO (Maybe a), x ~ Async (Maybe a)) => ApplyAB Hwait x io where
-  applyAB _ = wait
+class MkService (k :: ServiceKind) where
+  mkService :: [String] -> IO (Service k)
+  name :: Proxy k -> Text
 
-updateServices :: ServicesFetchers ['Youtube, 'Reddit, 'Serie, 'Anime]
-               -> IO (Services ['Youtube, 'Reddit, 'Serie, 'Anime])
+instance MkService 'Youtube where
+  mkService str = Service <$> Y.fetch str
+  name _ = "youtube"
+
+instance MkService 'Reddit where
+  mkService str = Service <$> R.fetch str
+  name _ = "reddit"
+
+instance MkService 'Anime where
+  mkService str = Service <$> HorribleSubs.fetch str
+  name _ = "anime"
+
+instance MkService 'Serie where
+  mkService str = Service <$> Eztv.fetch str
+  name _ = "serie"
+
+
+data Services (a :: [ServiceKind]) where
+  SNil :: Services '[]
+  SCons :: Service s -> Services xs -> Services (s ': xs)
+
+data ServicesRunner a where
+  SrNil :: ServicesRunner '[]
+  SrCons :: IO (Service s) -> ServicesRunner xs -> ServicesRunner (s ': xs)
+
+
+updateServices :: ServicesRunner a -> IO (Services a)
 updateServices services = do
   putStrLn "---------------------------------------------------"
   putStrLn . ("Start fetching :: " ++ ) . tshow =<< getLocalTime
 
 
-  handles <- hSequence $ applyAB (HMapL HAsync) services
-  services' <- hSequence $ applyAB (HMapL Hwait) handles
+  services' <- go services
+  -- handles <- hSequence $ applyAB (HMapL HAsync) services
+  -- services' <- hSequence $ applyAB (HMapL Hwait) handles
 
   putStrLn . ("Done fetching :: " ++ ) . tshow =<< getLocalTime
   putStrLn "---------------------------------------------------"
@@ -127,3 +110,97 @@ updateServices services = do
 
   where
     getLocalTime = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime
+    go :: ServicesRunner a -> IO (Services a)
+    go SrNil = return SNil
+    go (SrCons s xs) = s >>= \s' -> fmap (SCons s') (go xs)
+
+-- type ServicesFetchers services = HList (SList IO services)
+-- type Services services = HList (SList Maybe services)
+-- data ServiceKind =  Youtube | Reddit | Serie | Anime | Forecast deriving (Enum, Eq, Ord, Show, Read)
+-- data ServiceT (serviceType :: ServiceKind) input output =
+--     MkService {
+--                lastUpdate :: UnixTime
+--               ,inputs     :: [input]
+--               ,outputs    :: [output]
+--               } deriving (Show)
+
+-- type Service (k :: ServiceKind) = ServiceT k String (Ret k)
+-- class Fetchable (k :: ServiceKind) where
+--     type Ret k
+--     name :: Proxy k -> Text
+--     fetcher :: Proxy k -> [String] -> IO [Ret k]
+
+--     fetch :: [String] -> IO (Service k)
+--     fetch ins = MkService
+--                 <$> getUnixTime
+--                 <*> return ins
+--                 <*> fetcher (Proxy :: Proxy k) ins
+
+-- instance Fetchable 'Youtube  where
+--     type Ret 'Youtube = Y.Channel
+--     name _ = "youtube"
+--     fetcher _ = Y.fetch
+
+-- instance Fetchable 'Reddit  where
+--     type Ret 'Reddit = R.Reddit
+--     name _ = "reddit"
+--     fetcher _ = R.fetch
+
+-- instance Fetchable 'Serie  where
+--     type Ret 'Serie = Eztv.Serie
+--     name _ = "serie"
+--     fetcher _ = Eztv.fetch
+
+-- instance Fetchable 'Anime  where
+--     type Ret 'Anime = HorribleSubs.Anime
+--     name _ = "anime"
+--     fetcher _ = HorribleSubs.fetch
+
+
+-- type family SList m (ss :: [ServiceKind]) :: [*] where
+--     SList m '[] = '[]
+--     SList m (x ': xs) = m (Service x) ': SList m xs
+
+-- type family SListA m (ss :: [ServiceKind]) :: [*] where
+--     SListA m '[] = '[]
+--     SListA m (x ': xs) = m (IO (Service x)) ': SListA m xs
+
+-- class Applicative m => SBuilder m ss where
+--     buildFrom :: Proxy ss -> (Text -> m [String]) -> HList (SListA m ss)
+
+-- instance Applicative m => SBuilder m ('[]) where
+--     buildFrom _ _ = HNil
+
+
+-- instance (Fetchable x, SBuilder m xs) => SBuilder m (x ': xs) where
+--     buildFrom _ getInput = fetch <$> getInput (name (Proxy :: Proxy x))
+--                         `HCons` buildFrom (Proxy :: Proxy xs) getInput
+
+-- timeoutAfterMin :: forall a. Int -> IO a -> IO (Maybe a)
+-- timeoutAfterMin nbMin = let micro = (6 :: Int) in timeout (10^micro * 60 * nbMin)
+
+-- data HAsync = HAsync
+-- instance (io ~ IO (Async (Maybe a)), x ~ IO a) => ApplyAB HAsync x io where
+--   applyAB _ = async . timeoutAfterMin 10
+
+-- data Hwait = Hwait
+-- instance (io ~ IO (Maybe a), x ~ Async (Maybe a)) => ApplyAB Hwait x io where
+--   applyAB _ = wait
+
+-- updateServices :: ServicesFetchers ['Youtube, 'Reddit, 'Serie, 'Anime]
+--                -> IO (Services ['Youtube, 'Reddit, 'Serie, 'Anime])
+-- updateServices services = do
+--   putStrLn "---------------------------------------------------"
+--   putStrLn . ("Start fetching :: " ++ ) . tshow =<< getLocalTime
+
+
+--   handles <- hSequence $ applyAB (HMapL HAsync) services
+--   services' <- hSequence $ applyAB (HMapL Hwait) handles
+
+--   putStrLn . ("Done fetching :: " ++ ) . tshow =<< getLocalTime
+--   putStrLn "---------------------------------------------------"
+
+--   return services'
+
+--   where
+--     getLocalTime = utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime

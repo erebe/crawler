@@ -11,16 +11,13 @@ build-type:          Simple
 
 Executable          crawler
     hs-source-dirs:       src src/apis
-    ghc-options:         -Wall -O3 -threaded
+    ghc-options:         -Wall -O3 -threaded 
+    extensions: Strict
     --ghc-prof-options:-prof -fprof-auto -rtsopts
     other-modules:      Config
-                        , Haruhichan
                         , Http
-                        , OpenWeather
                         , Reddit
-                        , RestAPI
                         , Service
-                        , ShowRss
                         , Youtube
                         , Eztv
                         , HorribleSubs
@@ -31,7 +28,7 @@ Executable          crawler
                         ,transformers, resourcet, lens
                         ,directory, unbounded-delays
                         ,aeson, lens-aeson, tagsoup, htoml
-                        ,text, bytestring, HList
+                        ,text, bytestring
                         ,time, unix-time, classy-prelude, deepseq
 
 --Library

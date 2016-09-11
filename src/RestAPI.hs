@@ -27,7 +27,7 @@ import           Data.Aeson.TH
 import qualified Data.Text                 as T
 import           Data.UnixTime
 
-import           Data.HList
+import           Data.Vector.Heterogenous.HList
 import           Network.HTTP.Types.Status (ok200)
 import           Web.Scotty
 

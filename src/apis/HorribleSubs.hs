@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -13,19 +12,19 @@ module HorribleSubs ( Episode()
 
 
 import           ClassyPrelude
-import           Http                 (getPages)
+import           Http                       (getPages)
 
-import           Control.Lens         hiding (ix)
+import           Control.Lens               hiding (ix)
 import           Text.HTML.TagSoup
 import           Text.HTML.TagSoup.Match
 
 
-import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Char8      as BC
+import qualified Data.ByteString.Lazy       as BL
 import qualified Data.ByteString.Lazy.Char8 as BLC
-import qualified Data.ByteString.Char8 as BC
-import qualified Data.Text            as T
-import Data.Char
-import qualified Data.Text.Encoding   as T
+import           Data.Char
+import qualified Data.Text                  as T
+import qualified Data.Text.Encoding         as T
 import           Data.UnixTime
 
 

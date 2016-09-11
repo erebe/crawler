@@ -1,6 +1,10 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE KindSignatures      #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module Config where
 
@@ -15,11 +19,28 @@ import           Data.Aeson.Types
 import           Data.Text.IO              (readFile)
 import           System.Directory          (doesFileExist, getHomeDirectory)
 
-import           Data.HList
+import           Data.Proxy
 import           Text.Toml
 import           Text.Toml.Types
 
-instance FromJSON Config where
+
+class ParseConfig (ss :: [ServiceKind]) where
+  parseCfg :: Proxy ss -> (Text -> Parser [String]) -> Parser (ServicesRunner ss)
+
+instance ParseConfig '[] where
+  parseCfg _ _ = return SrNil
+
+instance (MkService k, ParseConfig xs) => ParseConfig (k ': xs) where
+  parseCfg (Proxy :: Proxy (k ': xs)) f = do
+    inputs <- f $ name (Proxy :: Proxy k)
+    let serviceRunner = mkService inputs :: IO (Service k)
+    ret <- parseCfg (Proxy :: Proxy xs) f
+    return $ SrCons serviceRunner ret
+
+
+
+
+instance ParseConfig a => FromJSON (Config (a :: [ServiceKind])) where
     parseJSON (Object v) = do
         appObj <- v .: "application"
         app' <- Application
@@ -27,11 +48,10 @@ instance FromJSON Config where
                 <*> appObj .:? "updateFrequencyInMin" .!= 30
                 <*> appObj .:? "homepagePath" .!= "thirdparty/homepage/"
         servicesObj <- v .: "services"
-
         let helper str = servicesObj .:? str .!= []
-        servicesFetchers <- hSequence $ buildFrom (Proxy :: Proxy ['Youtube, 'Reddit, 'Serie, 'Anime]) helper
+        servicesRunners <- parseCfg (Proxy :: Proxy a) helper
 
-        return $ MkConfig app' servicesFetchers
+        return $ MkConfig app' servicesRunners
 
     parseJSON _ = mzero
 
@@ -43,12 +63,12 @@ data Application = Application {
     , homepagePath         :: String
     } deriving (Show, Read)
 
-data Config = MkConfig {
+data Config (a :: [ServiceKind]) = MkConfig {
       app           :: Application
-    , subscriptions :: ServicesFetchers ['Youtube, 'Reddit, 'Serie, 'Anime]
+    , subscriptions :: ServicesRunner a
     }
 
-load :: IO (Maybe Config)
+load :: ParseConfig a => IO (Maybe (Config a))
 load = do
       cfg <-  runMaybeT extractConfig
       case cfg of
@@ -63,7 +83,7 @@ load = do
                        return Nothing
 
     where
-        extractConfig :: MaybeT IO Config
+        extractConfig :: ParseConfig a => MaybeT IO (Config a)
         extractConfig = do
             configPath      <- liftIO $ (<> "/.config/crawler.rc") <$> getHomeDirectory
             isConfigPresent <- liftIO $ doesFileExist configPath

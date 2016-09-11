@@ -17,7 +17,6 @@ import           Http                 (getPages)
 import           Control.Lens         hiding (ix)
 import           Text.HTML.TagSoup
 
-import           Control.DeepSeq
 import qualified Data.ByteString.Lazy as BL
 import           Data.Char
 import qualified Data.Text            as T
@@ -94,4 +93,3 @@ fetch seriesIds = do
 
     let !series' = force . catMaybes $ join <$> series
     return series'
-
