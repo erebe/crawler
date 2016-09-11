@@ -77,7 +77,7 @@ load = do
     where
         extractConfig :: ParseConfig a => MaybeT IO (Config a)
         extractConfig = do
-            configPath      <- liftIO $ (<> "/.config/crawler.rc") <$> getHomeDirectory
+            configPath      <- liftIO $ (<> "/crawler.cfg") <$> getHomeDirectory
             isConfigPresent <- liftIO $ doesFileExist configPath
             guard isConfigPresent
 

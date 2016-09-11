@@ -30,15 +30,9 @@
             group={{ user }}
             mode=u=rx,g=rx,o=rx
 
-    - name: create config dir
-      file: path=/home/{{ user }}/.config 
-            owner={{ user }}
-            group={{ user }}
-            state=directory mode=0700
-
     - name: Add {{ user }} config
-      template: src=config/crawler.rc
-                dest=/home/{{ user }}/.config/
+      template: src=config/crawler.cfg
+                dest=/home/{{ user }}/
                 owner={{ user }}
                 group={{ user }}
                 mode=u=r,g-rwx,o-rwx
@@ -73,7 +67,7 @@
       template: src=config/crawler.timer
                 dest=/usr/lib/systemd/system/
       notify: reload crawler
-    
+
     - name: reload systemd
       command: systemctl daemon-reload
 
