@@ -20,11 +20,11 @@
             dest=/usr/local/bin/
             owner={{ user }}
             group={{ user }}
-            mode=u=rx,g-rwx,o-rwx
+            mode=u=rx,g=rx,o=rx
       notify: reload crawler
 
     - name: Install crawler webpages
-      copy: src=../thirdparty/homepage
+      copy: src=../thirdparty/
             dest=/home/{{ user }}/
             owner={{ user }}
             group={{ user }}
@@ -68,12 +68,17 @@
       template: src=config/crawler.service
                 dest=/usr/lib/systemd/system/
       notify: reload crawler
+
+    - name: Copy systemd timer
+      template: src=config/crawler.timer
+                dest=/usr/lib/systemd/system/
+      notify: reload crawler
     
     - name: reload systemd
       command: systemctl daemon-reload
 
-    - name: crawler started
-      service: name=crawler state=started enabled=true
+    - name: crawler timer started
+      service: name=crawler.timer state=started enabled=true
 
 
   handlers:

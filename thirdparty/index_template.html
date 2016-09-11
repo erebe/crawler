@@ -4,7 +4,7 @@
     <title>Homepage</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="/assets/css/slide_panel.css">
+    <link rel="stylesheet" href="/css/slide_panel.css">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <style>
      .navbar-default {
@@ -255,6 +255,11 @@
 
       <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
       <script>
+        var data = 
+###DATA###
+;
+      </script>
+      <script>
         'use strict';
 
        function openPanel(title) {
@@ -371,7 +376,7 @@
         {
             var videos = json.filter(function(channel) { return channel.videos.length; } )
                             .map(function(channel) {
-                                return channel.videos.map(function(video) {
+                                return channel.videos.slice(0,1).map(function(video) {
                                     return generateVideoView(channel.name, video);
                                 });
                             });
@@ -395,7 +400,7 @@
             var animes = json.filter(function(anime) { return anime.episodes.length; } )
                             .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
                             .map(function(anime) {
-                                return anime.episodes.map(function(episode) {
+                                return anime.episodes.slice(0, 1).map(function(episode) {
                                     return generateAnimeView(anime, episode); });
                             });
 
@@ -417,7 +422,7 @@
             var series = json.filter(function(serie) { return serie.episodes.length; } )
                             .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
                             .map(function(serie) {
-                                return serie.episodes.map(function(episode) {
+                                return serie.episodes.slice(0, 1).map(function(episode) {
                                     return generateSerieView (serie, episode);
 
                                 });
@@ -485,10 +490,10 @@
             $("#container-center > div").hide();
             $("#container-center > div:nth-child(1)").show();
 
-            $.getJSON("/api/youtube/last",  prepareVideos.bind(null, $("#youtube")));
-            $.getJSON("/api/anime/last",   prepareAnimes.bind(null, $("#anime")));
-            $.getJSON("/api/serie/last",    prepareSeries.bind(null, $("#series")));
-            $.getJSON("/api/reddit/last",   prepareReddit.bind(null, $("#reddit")));
+            prepareVideos($("#youtube"), data.youtube);
+            prepareAnimes($("#anime"), data.anime);
+            prepareSeries($("#series"), data.serie);
+            prepareReddit($("#reddit"), data.reddit);
 
             //open the lateral panel
             $('.cd-btn').on('click', function(event){

@@ -4,12 +4,9 @@ Wants=network.target
 After=network.target
 
 [Service]
-Type=simple
-User=crawler
-ExecStart=/usr/local/bin/crawler
-Restart=always
-#WatchdogSec=60
-#TimeoutStartSec=0
+Type=oneshot
+User={{ user }}
+ExecStart=/bin/sh -c "cd; awk '/###DATA###/{system(\"crawler\");next}1' index_template.html > homepage/index.html"
 
 [Install]
 WantedBy=multi-user.target
