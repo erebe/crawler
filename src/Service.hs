@@ -1,4 +1,6 @@
 {-# LANGUAGE DataKinds                 #-}
+{-# LANGUAGE DeriveAnyClass            #-}
+{-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
@@ -28,7 +30,7 @@ import           Data.UnixTime
 import           Data.Aeson       hiding (json)
 import           Data.Aeson.TH
 import           Data.Aeson.Types
--- import           System.Timeout (timeout)
+import           System.Timeout   (timeout)
 
 instance ToJSON UnixTime where
     toJSON = toJSON . show . utSeconds
@@ -46,7 +48,7 @@ $(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Horrib
 $(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''R.Topic)
 $(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''R.Reddit)
 
-data ServiceKind =  Youtube | Reddit | Serie | Anime deriving (Enum, Eq, Ord, Show, Read)
+data ServiceKind =  Youtube | Reddit | Serie | Anime
 
 type family ServiceData (k :: ServiceKind)  where
   ServiceData 'Youtube = Y.Channel
@@ -62,10 +64,12 @@ type family ServiceInput (k :: ServiceKind) where
   ServiceInput 'Serie = String
 
 
-data Service (k :: ServiceKind) = ToJSON (ServiceData k) => Service [ServiceData k]
+data Service (k :: ServiceKind) where
+  Service :: ToJSON (ServiceData k) => [ServiceData k] -> Service k
 
+instance Monoid (Service k) where
 
-toJSON' :: Services a -> [Pair] -> Value
+toJSON' :: Services ss -> [Pair] -> Value
 toJSON' SNil acc = object acc
 toJSON' (SCons (Identity (Service d :: Service k)) ss) acc = toJSON' ss (acc <> [ name (Proxy :: Proxy k) .= toJSON d ])
 
@@ -100,17 +104,12 @@ data ServicesT m (a :: [ServiceKind]) where
 
 type Services a = ServicesT Identity a
 
+overServices :: (Functor m, Applicative m') => (forall c. m (Service c) -> m' (b (Service c))) -> ServicesT m a -> m' (ServicesT b a)
+overServices _ SNil = pure SNil
+overServices f (SCons x xs) = SCons <$> f x <*> overServices f xs
 
 updateServices :: ServicesT IO a -> IO (Services a)
-updateServices services = goAsync services >>= goWait
+updateServices services = overServices (async . fmap (fromMaybe mempty) . timeoutAfterMin 10 ) services >>= overServices (fmap Identity . waitAsync)
   where
-    goAsync :: ServicesT IO a -> IO (ServicesT Async a)
-    goAsync SNil = return SNil
-    goAsync (SCons s xs) = async s >>= \s' -> fmap (SCons s') (goAsync xs)
-
-    goWait :: ServicesT Async a -> IO (Services a)
-    goWait SNil = return SNil
-    goWait (SCons s xs) = waitAsync s >>= \s' -> fmap (SCons (Identity s')) (goWait xs)
-
-    -- timeoutAfterMin :: forall a. Int -> IO a -> IO (Maybe a)
-    -- timeoutAfterMin nbMin = let micro = (6 :: Int) in timeout (10^micro * 60 * nbMin)
+    timeoutAfterMin :: forall a. Int -> IO a -> IO (Maybe a)
+    timeoutAfterMin nbMin = let micro = (6 :: Int) in timeout (10^micro * 60 * nbMin)
