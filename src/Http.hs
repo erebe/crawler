@@ -36,6 +36,6 @@ worker manager url = msum $ replicate 3 fetchPage
           return body
 
       fetchPageImpl = do
-          urlRequest <- parseUrl url
+          urlRequest <- parseUrlThrow url
           response   <- httpLbs urlRequest manager
           return $ responseBody response

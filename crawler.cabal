@@ -11,8 +11,8 @@ build-type:          Simple
 
 Executable          crawler
     hs-source-dirs:       src src/apis
-    ghc-options:         -Wall -O3 -threaded 
-    extensions: Strict
+    ghc-options:         -Wall -O3 -threaded -fno-warn-orphans
+    extensions:          Strict
     --ghc-prof-options:-prof -fprof-auto -rtsopts
     other-modules:      Config
                         , Http
@@ -24,7 +24,7 @@ Executable          crawler
 
     main-is:             Main.hs
     Build-Depends:       base, async
-                        ,scotty, http-conduit, http-types
+                        , http-conduit, http-types
                         ,transformers, resourcet, lens
                         ,directory, unbounded-delays
                         ,aeson, lens-aeson, tagsoup, htoml

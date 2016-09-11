@@ -25,19 +25,17 @@ import           Text.Toml.Types
 
 
 class ParseConfig (ss :: [ServiceKind]) where
-  parseCfg :: Proxy ss -> (Text -> Parser [String]) -> Parser (ServicesRunner ss)
+  parseCfg :: Proxy ss -> (Text -> Parser [String]) -> Parser (ServicesT IO ss)
 
 instance ParseConfig '[] where
-  parseCfg _ _ = return SrNil
+  parseCfg _ _ = return SNil
 
 instance (MkService k, ParseConfig xs) => ParseConfig (k ': xs) where
   parseCfg (Proxy :: Proxy (k ': xs)) f = do
     inputs <- f $ name (Proxy :: Proxy k)
     let serviceRunner = mkService inputs :: IO (Service k)
     ret <- parseCfg (Proxy :: Proxy xs) f
-    return $ SrCons serviceRunner ret
-
-
+    return $ SCons serviceRunner ret
 
 
 instance ParseConfig a => FromJSON (Config (a :: [ServiceKind])) where
@@ -65,7 +63,7 @@ data Application = Application {
 
 data Config (a :: [ServiceKind]) = MkConfig {
       app           :: Application
-    , subscriptions :: ServicesRunner a
+    , subscriptions :: ServicesT IO a
     }
 
 load :: ParseConfig a => IO (Maybe (Config a))
