@@ -20,7 +20,7 @@
             dest=/usr/local/bin/
             owner={{ user }}
             group={{ user }}
-            mode=u=rx,g=rx,o=rx
+            mode=u=rx,g-w,o-w
       notify: reload crawler
 
     - name: Install crawler webpages
@@ -28,7 +28,7 @@
             dest=/home/{{ user }}/
             owner={{ user }}
             group={{ user }}
-            mode=u=rx,g-rwx,o-rwx
+            mode=u=rx,g=rx,o=rx
 
     - name: create config dir
       file: path=/home/{{ user }}/.config 

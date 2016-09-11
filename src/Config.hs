@@ -40,16 +40,11 @@ instance (MkService k, ParseConfig xs) => ParseConfig (k ': xs) where
 
 instance ParseConfig a => FromJSON (Config (a :: [ServiceKind])) where
     parseJSON (Object v) = do
-        appObj <- v .: "application"
-        app' <- Application
-                <$> appObj .:? "listenOn" .!= 8080
-                <*> appObj .:? "updateFrequencyInMin" .!= 30
-                <*> appObj .:? "homepagePath" .!= "thirdparty/homepage/"
         servicesObj <- v .: "services"
         let helper str = servicesObj .:? str .!= []
         servicesRunners <- parseCfg (Proxy :: Proxy a) helper
 
-        return $ MkConfig app' servicesRunners
+        return $ MkConfig servicesRunners
 
     parseJSON _ = mzero
 
@@ -62,8 +57,7 @@ data Application = Application {
     } deriving (Show, Read)
 
 data Config (a :: [ServiceKind]) = MkConfig {
-      app           :: Application
-    , subscriptions :: ServicesT IO a
+     subscriptions :: ServicesT IO a
     }
 
 load :: ParseConfig a => IO (Maybe (Config a))

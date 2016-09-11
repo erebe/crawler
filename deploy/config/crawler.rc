@@ -1,9 +1,3 @@
-[application]
-listenOn = {{ listen_port }}
-updateFrequencyInMin = 30
-homepagePath = "/home/{{ user }}/homepage"
-
-
 [services]
 youtube = [  # "UCLvppPP2RucGfgeoZlq68fg" # hearthstonefr
             "UCgsTGuH5uCyL06kKY843fgw" # trolden1337
@@ -46,18 +40,18 @@ serie  = [ "1128/constantine/"     # "962" # constantine
          , "428/the-walking-dead/" # "318" # the walking dead
          , "1012/silicon-valley/"  # "799" # sillicon valley
          , "1328/heroes-reborn/"   # "1136" # Heroes reborn
-         , "1342/the-expanse/"     
-         , "1250/mr-robot/" 
+         , "1342/the-expanse/"
+         , "1250/mr-robot/"
          ]
-anime = [ 
+anime = [
          "no-game-no-life"
-	    , "fate-stay-night-unlimited-blade-works"
-	    , "shokugeki-no-soma"
+      , "fate-stay-night-unlimited-blade-works"
+      , "shokugeki-no-soma"
         , "god-eater"
-        , "gate" 
+        , "gate"
         , "overlord"
         , "maoyuu-maou-yuusha"
-        , "noragami" 
+        , "noragami"
         , "one-punch-man"
         , "boku-dake-ga-inai-machi"
         , "dimension-w"
@@ -67,8 +61,3 @@ anime = [
         , "naruto-shippuuden"
         ]
 # forecast = ["valbonne,fr", "guethary,fr", "lyon,fr", "nice,fr"]
-
-
-
-
-   

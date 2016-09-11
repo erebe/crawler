@@ -255,7 +255,7 @@
 
       <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script>
       <script>
-        var data = 
+        var data =
 ###DATA###
 ;
       </script>
@@ -297,8 +297,9 @@
 
             header.click(function(event) {
                 event.preventDefault();
-                $.getJSON("/api/youtube/get/" + encodeURIComponent(channelName),
-                        prepareVideos.bind(undefined, openPanel(channelName)));
+                prepareVideos(openPanel(channelName)
+                        , data.youtube.filter(function(channel) { return channel.name === channelName; })
+                        , 999 );
             });
 
 
@@ -330,8 +331,9 @@
 
             header.click(function(event) {
                 event.preventDefault();
-                $.getJSON("/api/serie/get/" + encodeURIComponent(serie.name),
-                        prepareSeries.bind(undefined, openPanel(serie.name)));
+                prepareSeries(openPanel(serie.name)
+                        , data.serie.filter(function(channel) { return channel.name === serie.name; })
+                , 999);
             });
 
 
@@ -364,19 +366,18 @@
 
             header.click(function(event) {
                 event.preventDefault();
-                $.getJSON("/api/anime/get/" + encodeURIComponent(anime.name),
-                        prepareAnimes.bind(undefined, openPanel(anime.name)));
+                prepareSeries(openPanel(anime.name)
+                        , data.anime.filter(function(channel) { return channel.name === anime.name; }), 999);
             });
-
 
             return container.append(header, thumbnail, footer);
         }
 
-        function prepareVideos(container, json)
+        function prepareVideos(container, json, limit)
         {
             var videos = json.filter(function(channel) { return channel.videos.length; } )
                             .map(function(channel) {
-                                return channel.videos.slice(0,1).map(function(video) {
+                                return channel.videos.slice(0,limit).map(function(video) {
                                     return generateVideoView(channel.name, video);
                                 });
                             });
@@ -395,12 +396,12 @@
 
         }
 
-        function prepareAnimes(container, json)
+        function prepareAnimes(container, json, limit)
         {
             var animes = json.filter(function(anime) { return anime.episodes.length; } )
                             .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
                             .map(function(anime) {
-                                return anime.episodes.slice(0, 1).map(function(episode) {
+                                return anime.episodes.slice(0, limit).map(function(episode) {
                                     return generateAnimeView(anime, episode); });
                             });
 
@@ -417,12 +418,12 @@
             container.append.apply(container, dom);
         }
 
-        function prepareSeries(container, json)
+        function prepareSeries(container, json, limit)
         {
             var series = json.filter(function(serie) { return serie.episodes.length; } )
                             .sort(function(a,b) { return b.episodes[0].date - a.episodes[0].date;} )
                             .map(function(serie) {
-                                return serie.episodes.slice(0, 1).map(function(episode) {
+                                return serie.episodes.slice(0, limit).map(function(episode) {
                                     return generateSerieView (serie, episode);
 
                                 });
@@ -490,10 +491,10 @@
             $("#container-center > div").hide();
             $("#container-center > div:nth-child(1)").show();
 
-            prepareVideos($("#youtube"), data.youtube);
-            prepareAnimes($("#anime"), data.anime);
-            prepareSeries($("#series"), data.serie);
-            prepareReddit($("#reddit"), data.reddit);
+            prepareVideos($("#youtube"), data.youtube, 1);
+            prepareAnimes($("#anime"), data.anime, 1);
+            prepareSeries($("#series"), data.serie, 1);
+            prepareReddit($("#reddit"), data.reddit, 1);
 
             //open the lateral panel
             $('.cd-btn').on('click', function(event){
