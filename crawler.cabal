@@ -23,13 +23,12 @@ Executable          crawler
                         , HorribleSubs
 
     main-is:             Main.hs
-    Build-Depends:       base, async
-                        , http-conduit, http-types
-                        ,transformers, resourcet, lens
-                        ,directory, unbounded-delays
-                        ,aeson, lens-aeson, tagsoup, htoml
-                        ,text, bytestring
-                        ,time, unix-time, classy-prelude, deepseq
+    Build-Depends:        base, async
+                        , http-conduit
+                        , transformers, microlens, microlens-th, directory 
+                        , aeson, lens-aeson, tagsoup, htoml
+                        , text, bytestring
+                        , unix-time, classy-prelude
 
 --Library
 --    ghc-options:     -O3 -Wall

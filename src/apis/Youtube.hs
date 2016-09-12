@@ -19,7 +19,8 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text            as T
 import qualified Data.Text.Encoding   as T
 
-import           Control.Lens
+import           Lens.Micro
+import           Lens.Micro.TH
 import           Data.Aeson
 import           Data.Aeson.Lens
 
@@ -66,7 +67,7 @@ parseVideo = parse
 
 decodeAPI :: BL.ByteString -> Maybe Channel
 decodeAPI string = do
-    v <- (decode string  :: Maybe Value) >>= firstOf (key "items")
+    v <- (decode string  :: Maybe Value) >>= \val -> val ^? (key "items")
     let title' =  v ^? nth 0 . key "snippet" . key "channelTitle" . _String
     let vids = catMaybes $ v ^.. _Array . traverse . to parseVideo
 

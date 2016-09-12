@@ -14,7 +14,7 @@ module Eztv ( Serie()
 import           ClassyPrelude
 import           Http                 (getPages)
 
-import           Control.Lens         hiding (ix)
+import           Lens.Micro.TH
 import           Text.HTML.TagSoup
 
 import qualified Data.ByteString.Lazy as BL

@@ -14,7 +14,7 @@ module HorribleSubs ( Episode()
 import           ClassyPrelude
 import           Http                       (getPages)
 
-import           Control.Lens               hiding (ix)
+import           Lens.Micro.TH
 import           Text.HTML.TagSoup
 import           Text.HTML.TagSoup.Match
 

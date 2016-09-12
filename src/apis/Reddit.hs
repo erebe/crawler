@@ -13,7 +13,8 @@ import           Http                 (getPages)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text            as T
 
-import           Control.Lens
+import           Lens.Micro
+import           Lens.Micro.TH
 import           Data.Aeson
 import           Data.Aeson.Lens
 
