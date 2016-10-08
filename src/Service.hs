@@ -1,7 +1,4 @@
 {-# LANGUAGE DataKinds                 #-}
-{-# LANGUAGE DeriveAnyClass            #-}
-{-# LANGUAGE DeriveGeneric             #-}
-{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE GADTs                     #-}
@@ -65,9 +62,11 @@ type family ServiceInput (k :: ServiceKind) where
 
 
 data Service (k :: ServiceKind) where
-  Service :: ToJSON (ServiceData k) => [ServiceData k] -> Service k
+  Service :: [ServiceData k] -> Service k
 
 instance Monoid (Service k) where
+  mempty = Service mempty
+  mappend (Service a) (Service b) = Service (a <> b)
 
 toJSON' :: Services ss -> [Pair] -> Value
 toJSON' SNil acc = object acc
@@ -77,7 +76,7 @@ instance ToJSON (Services a) where
   toJSON ss = toJSON' ss []
 
 
-class MkService (k :: ServiceKind) where
+class ToJSON (ServiceData k) => MkService (k :: ServiceKind) where
   mkService :: [String] -> IO (Service k)
   name :: Proxy k -> Text
 
