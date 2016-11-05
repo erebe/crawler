@@ -13,13 +13,16 @@ import           Service
 import           Data.Aeson
 import           Data.Maybe         (fromJust)
 import qualified Data.Text.Encoding as T
+import           System.IO          hiding (putStrLn)
 
 
 
 
 main :: IO ()
 main = do
-    config <- Config.load :: IO (Maybe (Config.Config '[ 'Youtube, 'Anime, 'Reddit, 'Serie]))
-    guard (isJust config)
+  hSetBuffering stdout LineBuffering
 
-    updateServices (Config.subscriptions (fromJust config)) >>= putStrLn . T.decodeUtf8 . toStrict . encode
+  config <- Config.load :: IO (Maybe (Config.Config '[ 'Youtube, {-'Anime,-} 'Reddit, 'Serie]))
+  guard (isJust config)
+
+  updateServices (Config.subscriptions (fromJust config)) >>= putStrLn . T.decodeUtf8 . toStrict . encode
