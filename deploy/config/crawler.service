@@ -6,7 +6,7 @@ After=network.target
 [Service]
 Type=oneshot
 User={{ user }}
-ExecStart=/bin/sh -c "cd; awk '/###DATA###/{system(\"crawler\");next}1' index_template.html > homepage/index.html"
+ExecStart=/bin/sh -c "cd; awk '/###DATA###/{system(\"crawler\");next}1' index_template.html > index_full.html; mv index_full.html homepage/index.html"
 
 [Install]
 WantedBy=multi-user.target
