@@ -196,19 +196,19 @@
                   <div>
                       <ul class="nav navbar-nav">
                         <li>
-                            <a href="" class="active"">Youtube</a>
+                            <a href="#youtube" class="active"">Youtube</a>
                         </li>
                         <li>
-                            <a href="">Séries</a>
+                            <a href="#series">Séries</a>
                         </li>
                         <li>
-                            <a href="">Anime</a>
+                            <a href="#anime">Anime</a>
                         </li>
                         <li>
-                            <a href="">Reddit</a>
+                            <a href="#reddit">Reddit</a>
                         </li>
                         <li>
-                            <a href="">Twitter</a>
+                            <a href="#twitter">Twitter</a>
                         </li>
                     </ul>
                   </div>
@@ -526,12 +526,8 @@
                 var pos = $("nav ul li a").index($("nav ul li a[class*='active']"));
                 pos = 1 + ((pos + op) % len);
                 pos = (pos <= 0) ? len : pos;
-                $("nav ul li a").removeClass("active");
-                $("nav ul li:nth-child(" + pos + ") a").addClass("active");
-                $("#container-center > div").hide();
-                $("#container-center > div:nth-child(" + pos + ")").show();
-                $(document).scrollTop(0);
-                ev.preventDefault();
+                location.hash = $("nav ul li:nth-child(" + pos + ") a").attr('href');
+                $("nav ul li:nth-child(" + pos + ") a").click();
             });
 
             $("nav ul li a").on("click", function(ev) {
@@ -543,9 +539,9 @@
                 $("#container-center > div").hide();
                 $("#container-center > div:nth-child(" + pos + ")").show();
                 $(document).scrollTop(0);
-                ev.preventDefault();
-
             });
+
+            $("nav ul li a[href='" + location.hash + "']").click();
         });
 
       </script>
