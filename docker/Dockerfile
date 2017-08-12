@@ -7,7 +7,10 @@ ADD https://github.com/erebe/crawler/releases/download/1.1/crawler.tar.gz?raw=tr
 ADD run.sh /home/crawler/
 RUN cd /home/crawler && \
     tar xzvf crawler.tar.gz && \
-    rm crawler.tar.gz
+    rm crawler.tar.gz && \
+    apk update && \
+    apk add ca-certificates && \
+    rm -rf /var/cache/apk/*
 
 USER crawler
 WORKDIR /home/crawler
