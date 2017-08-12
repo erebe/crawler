@@ -10,9 +10,9 @@ RUN cd /home/crawler && \
     rm crawler.tar.gz
 
 USER crawler
-VOLUME /data
 WORKDIR /home/crawler
 
+VOLUME /data
 ENV SLEEP_TIME_SEC 1800
 
 CMD ["./run.sh"]
