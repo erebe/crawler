@@ -22,7 +22,7 @@ main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering
 
-  config <- Config.load :: IO (Maybe (Config.Config '[ 'Youtube, {-'Anime,-} 'Reddit, 'Serie]))
+  config <- Config.load :: IO (Maybe (Config.Config '[ 'Youtube, 'Anime, 'Reddit, 'Serie]))
   guard (isJust config)
 
   updateServices (Config.subscriptions (fromJust config)) >>= putStrLn . T.decodeUtf8 . toStrict . encode
