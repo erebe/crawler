@@ -19,12 +19,13 @@ import qualified Eztv
 import qualified HorribleSubs
 import qualified Reddit           as R
 import qualified Youtube          as Y
+import qualified MangaFox         as M
 
 import           ClassyPrelude
 import           Data.Proxy
 import           Data.UnixTime
 
-import           Data.Aeson       hiding (json)
+import           Data.Aeson
 import           Data.Aeson.TH
 import           Data.Aeson.Types
 import           System.Timeout   (timeout)
@@ -32,6 +33,9 @@ import           System.Timeout   (timeout)
 instance ToJSON UnixTime where
     toJSON = toJSON . show . utSeconds
 
+
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''M.Chapter)
+$(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''M.Manga)
 
 $(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Eztv.Episode)
 $(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Eztv.Serie)
@@ -45,13 +49,14 @@ $(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''Horrib
 $(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''R.Topic)
 $(deriveToJSON defaultOptions {fieldLabelModifier = dropWhile (== '_')} ''R.Reddit)
 
-data ServiceKind =  Youtube | Reddit | Serie | Anime
+data ServiceKind =  Youtube | Reddit | Serie | Anime | Manga
 
 type family ServiceData (k :: ServiceKind)  where
   ServiceData 'Youtube = Y.Channel
   ServiceData 'Reddit = R.Reddit
   ServiceData 'Anime = HorribleSubs.Anime
   ServiceData 'Serie = Eztv.Serie
+  ServiceData 'Manga = M.Manga
 
 
 type family ServiceInput (k :: ServiceKind) where
@@ -59,6 +64,7 @@ type family ServiceInput (k :: ServiceKind) where
   ServiceInput 'Reddit = String
   ServiceInput 'Anime = String
   ServiceInput 'Serie = String
+  ServiceInput 'Manga = String
 
 
 data Service (k :: ServiceKind) where
@@ -96,6 +102,9 @@ instance MkService 'Serie where
   mkService str = Service <$> Eztv.fetch str
   name _ = "serie"
 
+instance MkService 'Manga where
+  mkService str = Service <$> M.fetch str
+  name _ = "manga"
 
 data ServicesT m (a :: [ServiceKind]) where
   SNil :: ServicesT m '[]

@@ -205,6 +205,9 @@
                             <a href="#anime">Anime</a>
                         </li>
                         <li>
+                            <a href="#manga">Manga</a>
+                        </li>
+                        <li>
                             <a href="#reddit">Reddit</a>
                         </li>
                         <li>
@@ -224,6 +227,9 @@
 
           </div>
           <div id="anime" class="row">
+
+          </div>
+          <div id="manga" class="row">
 
           </div>
           <div id="reddit" class="row">
@@ -368,6 +374,39 @@
             return container.append(header, thumbnail, footer);
         }
 
+        function generateMangaView(manga, chapter)
+        {
+            var container = $("<div>", {'class': 'item anime-item col-sm-6 col-md-2'});
+
+            var header = $('<header>' +
+                            '<a href=""><h5>' + manga.name + '</h5></a>' +
+                        '</header>'
+                        );
+
+            var thumbnail = $('<div class="thumbnail">' +
+                                '<a href="' + chapter.url + '">' +
+                                '<img src="' + manga.thumbnail + '" /></a>' +
+                            '</div>'
+                            );
+
+            var date = new Date(chapter.date * 1000);
+            var footer = $('<footer>' +
+                                '<a href="' + chapter.url + '">' +
+                                '<a>' + chapter.title + '</a><br/>' +
+                                '<a>' + date.toLocaleDateString() + '</a>' +
+                            '</a>' +
+                        '</footer>');
+
+            header.click(function(event) {
+                event.preventDefault();
+                prepareSeries(openPanel(manga.name)
+                        , data.manga.filter(function(m) { return m.name === manga.name; }), 999);
+            });
+
+            return container.append(header, thumbnail, footer);
+        }
+
+
         function prepareVideos(container, json, limit)
         {
             var videos = json.filter(function(channel) { return channel.videos.length; } )
@@ -398,6 +437,28 @@
                             .map(function(anime) {
                                 return anime.episodes.slice(0, limit).map(function(episode) {
                                     return generateAnimeView(anime, episode); });
+                            });
+
+
+            var dom = [];
+            $.each(animes, function(ix, el ) {
+                var i = Math.floor(ix / 6);
+                if(dom[i] === undefined) {
+                    dom[i] = $("<div>", {"class" : "row"});
+                }
+                dom[i].append(el);
+
+            });
+            container.append.apply(container, dom);
+        }
+
+        function prepareManga(container, json, limit)
+        {
+            var animes = json.filter(function(manga) { return manga.chapters.length; } )
+                            .sort(function(a,b) { return b.chapters[0].date - a.chapters[0].date;} )
+                            .map(function(manga) {
+                                return manga.chapters.slice(0, limit).map(function(chapter) {
+                                  return generateMangaView(manga, chapter); });
                             });
 
 
@@ -488,6 +549,7 @@
 
             prepareVideos($("#youtube"), data.youtube, 1);
             prepareAnimes($("#anime"), data.anime, 1);
+            prepareManga($("#manga"), data.manga, 1);
             prepareSeries($("#series"), data.serie, 1);
             prepareReddit($("#reddit"), data.reddit, 1);
 

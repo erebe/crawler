@@ -21,6 +21,7 @@ Executable          crawler
                         , Youtube
                         , Eztv
                         , HorribleSubs
+                        , MangaFox
 
     main-is:             Main.hs
     Build-Depends:        base, async
