@@ -23,7 +23,7 @@
      .navbar-nav {
          margin-left: auto;
          margin-right: auto;
-         width: 412px;
+         width: 480px;
          float: none;
          margin-bottom: 0px;
      }
@@ -399,7 +399,7 @@
 
             header.click(function(event) {
                 event.preventDefault();
-                prepareSeries(openPanel(manga.name)
+                prepareManga(openPanel(manga.name)
                         , data.manga.filter(function(m) { return m.name === manga.name; }), 999);
             });
 

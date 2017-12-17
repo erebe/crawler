@@ -77,17 +77,17 @@ load = do
     where
         extractConfig :: ParseConfig a => MaybeT IO (Config a)
         extractConfig = do
-            configPath      <- liftIO $ (<> "/crawler.cfg") <$> getHomeDirectory
-            isConfigPresent <- liftIO $ doesFileExist configPath
-            guard isConfigPresent
+          let configPath = "./config/crawler.cfg"
+          isConfigPresent <- liftIO $ doesFileExist configPath
+          guard isConfigPresent
 
-            file <- liftIO $ Data.Text.IO.readFile configPath
-            toml <- case parseTomlDoc "" file of
-                         Right val -> return val
-                         Left err -> do liftIO $ print err
-                                        return emptyTable
+          file <- liftIO $ Data.Text.IO.readFile configPath
+          toml <- case parseTomlDoc "" file of
+                       Right val -> return val
+                       Left err -> do liftIO $ print err
+                                      return emptyTable
 
-            let config = parseMaybe parseJSON (toJSON toml)
-            case config of
-                 Just x -> return x
-                 _ -> mzero
+          let config = parseMaybe parseJSON (toJSON toml)
+          case config of
+               Just x -> return x
+               _ -> mzero

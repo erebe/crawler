@@ -42,7 +42,7 @@ $(makeLenses ''Manga)
 extractData :: UnixTime -> Text -> Maybe Manga
 extractData time xmlStr = do
     let tags = parseTagsOptions parseOptionsFast xmlStr
-    let showname = T.strip . T.takeWhile (/= '(') <$> extractTextFromTag "<a class='original'>" tags
+    let showname = T.strip . T.takeWhile (/= '(') <$> extractTextFromTag "<a style='color:#666' href>" tags
     let thumb = fromAttrib (T.pack "src") <$> find (~== "<img alt onerror src>") tags
     let items = filter (~== "<a class='tips' href>") tags
     let episodes' = mkChapter <$> zip items (getDates tags)
