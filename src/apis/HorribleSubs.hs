@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE GADTs   #-}
 
 module HorribleSubs ( Episode()
                   , title, magnetURI, date
@@ -49,18 +50,24 @@ extractData :: UnixTime -> Text -> IO (Maybe Anime)
 extractData _ xmlStr = do
     let tags     = parseTagsOptions parseOptionsFast xmlStr
     let showname = extractTextFromTag "<h1 class='entry-title'>" tags
-    let thumb    = fromAttrib (T.pack "src") <$> find (~== "<img class='size-full alignleft'>") tags
+    let thumb    = mappend (T.pack "https://horriblesubs.info") . fromAttrib (T.pack "src") <$> find (~== "<img class='img-responsive center-block'>") tags
     let showId   = find (\tag -> maybe False (T.isPrefixOf (T.pack "var hs_showid")) (maybeTagText tag)) tags
+    let showNumber = takeWhile isDigit . dropWhile (not .isDigit) . T.unpack . fromTagText $ fromMaybe (TagText (T.pack "")) showId
 
-    episodes' <- flip (maybe (return mempty)) showId $ \showId' -> do
-      let showNumber = takeWhile isDigit . dropWhile (not .isDigit) . T.unpack . fromTagText $ showId'
+    now <- getUnixTime
+    today <- BL.fromStrict <$> formatUnixTime (BC.pack "%D") now
+    yesterday <- BL.fromStrict <$> formatUnixTime (BC.pack "%D") (addUnixDiffTime now (secondsToUnixDiffTime (3600 * 24)))
+
+
+    episodes' <- do
       items <- getPages (parseTagsOptions parseOptionsFast) [apiUrl showNumber]
       let tags' = fromMaybe mempty (headMay $ catMaybes items)
-      let items' = partitions (tagOpen (== BLC.pack "tr") null) tags'
-      let datesRaws = innerText . getTagContent (BLC.pack "td") (anyAttrValueLit (BLC.pack "rls-label"))  <$> partitions (~== "<td class='rls-label'>") tags'
-      let dates =  parseUnixTime (BC.pack "%D") . BL.toStrict . BLC.takeWhile (/= '(') . BLC.dropWhile (== '(') <$> datesRaws
-      let datesList = foldMap (replicate 3) dates :: [UnixTime]
-      return $ mkEpisode <$> zip items' datesList
+      let items_720 = partitions (~== "<div class='rls-link link-720p'>") tags'
+      let items_1080 = partitions (~== "<div class='rls-link link-1080p'>") tags'
+      let datesRaws = innerText . getTagContent (BLC.pack "span") (anyAttrValueLit (BLC.pack "rls-date"))  <$> partitions (~== "<span class='rls-date'>") tags'
+      let normalizedDates = (\date -> if date == (BLC.pack "Yesterday") then yesterday else if date == (BLC.pack "Today") then today else date) <$> datesRaws
+      let dates =  parseUnixTime (BC.pack "%D") . BL.toStrict . BLC.takeWhile (/= '(') . BLC.dropWhile (== '(') <$> normalizedDates
+      return $ (mkEpisode <$> zip items_720 dates) <> (mkEpisode <$> zip items_1080 dates)
 
 
     return $ Anime <$> showname
@@ -69,19 +76,19 @@ extractData _ xmlStr = do
 
     where
         extractTextFromTag tag tags = maybeTagText =<< (listToMaybe . drop 1 $ dropWhile (~/= tag) tags)
-        mkEpisode (tag,datee) = Episode (T.decodeUtf8 . BL.toStrict . innerText . getTagContent (BLC.pack "td") (anyAttrValueLit (BLC.pack "dl-label")) $ tag)
-                                     (T.decodeUtf8 . BL.toStrict . fromMaybe mempty $ fromAttrib (BLC.pack "href") <$> find (~== "<a title='Magnet Link'>") tag)
+        mkEpisode (tag,datee) = Episode (T.drop 2 . T.dropWhile (/= ']') . T.decodeUtf8 . BL.toStrict . fromMaybe mempty $ fromAttrib (BLC.pack "href") <$> find (~== "<a title='XDCC search'>") tag)
+                                        (T.decodeUtf8 . BL.toStrict . fromMaybe mempty $ fromAttrib (BLC.pack "href") <$> find (~== "<a title='Magnet Link'>") tag)
                                      datee
 
 baseUrl :: String
-baseUrl = "http://horriblesubs.info/shows/"
+baseUrl = "https://horriblesubs.info/shows/"
 
 craftUrl :: String -> String
 craftUrl animeName = baseUrl <> animeName
 
 
 apiUrl :: String -> String
-apiUrl showId = "http://horriblesubs.info/lib/getshows.php?type=show&showid=" <> showId <> "&nextid=0"
+apiUrl showId = "https://horriblesubs.info/api.php?method=getshows&type=show&showid=" <> showId
 
 fetch :: [String] -> IO [Anime]
 fetch seriesIds = do
