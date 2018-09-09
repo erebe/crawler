@@ -1,17 +1,18 @@
-FROM alpine:3.6 as builder
+FROM alpine:3.8 as builder
 MAINTAINER github@erebe.eu
 
-RUN apk --no-cache add --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
-        ca-certificates git ghc upx curl musl-dev gmp-dev zlib-dev pcre-dev
-RUN curl -sSL https://get.haskellstack.org/ | sh
+RUN apk --no-cache add ca-certificates git curl musl-dev gmp-dev zlib-dev pcre-dev ghc
+RUN apk --no-cache add --repository http://dl-cdn.alpinelinux.org/alpine/edge/community upx
+RUN curl -sSL https://github.com/commercialhaskell/stack/releases/download/v1.6.5/stack-1.6.5-linux-x86_64-static.tar.gz | tar xvz && \
+    mv stack*/stack /usr/bin
 
 COPY stack.yaml /mnt
 COPY *.cabal /mnt
 WORKDIR /mnt
 RUN rm -rf ~/.stack &&  \
+    rm -rf ~/.ghc && \
     stack config set system-ghc --global true && \
-    stack setup && \
-    stack install --split-objs --ghc-options="-fPIC -fllvm" --only-dependencies
+    stack install --skip-ghc-check --split-objs --ghc-options="-fPIC -fllvm" --only-dependencies
 
 COPY . /mnt
 
