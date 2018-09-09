@@ -21,7 +21,7 @@ import qualified Reddit           as R
 import qualified Youtube          as Y
 import qualified MangaFox         as M
 
-import           ClassyPrelude
+import           ClassyPrelude hiding (timeout)
 import           Data.Proxy
 import           Data.UnixTime
 
@@ -70,9 +70,11 @@ type family ServiceInput (k :: ServiceKind) where
 data Service (k :: ServiceKind) where
   Service :: [ServiceData k] -> Service k
 
+instance Semigroup (Service k) where
+  (Service a) <> (Service b) = Service (a <> b)
+
 instance Monoid (Service k) where
   mempty = Service mempty
-  mappend (Service a) (Service b) = Service (a <> b)
 
 toJSON' :: Services ss -> [Pair] -> Value
 toJSON' SNil acc = object acc

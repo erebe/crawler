@@ -5,7 +5,7 @@
 
 module Main where
 
-import           ClassyPrelude
+import           ClassyPrelude hiding (hSetBuffering)
 
 import qualified Config
 import           Service
