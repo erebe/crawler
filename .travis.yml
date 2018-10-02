@@ -12,7 +12,7 @@ script:
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
   - export REPO=erebe/crawler
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
-  - cd docker; docker build -f Dockerfile -t $REPO:$TAG .
+  - docker build -f Dockerfile -t $REPO:$TAG .
   - docker tag $REPO:$TAG $REPO:latest
   - docker push $REPO
 
