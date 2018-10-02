@@ -27,6 +27,7 @@ import           Data.Char
 import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as T
 import           Data.UnixTime
+import           Data.List                  (transpose)
 
 
 
@@ -67,7 +68,7 @@ extractData _ xmlStr = do
       let datesRaws = innerText . getTagContent (BLC.pack "span") (anyAttrValueLit (BLC.pack "rls-date"))  <$> partitions (~== "<span class='rls-date'>") tags'
       let normalizedDates = (\date -> if date == (BLC.pack "Yesterday") then yesterday else if date == (BLC.pack "Today") then today else date) <$> datesRaws
       let dates =  parseUnixTime (BC.pack "%D") . BL.toStrict . BLC.takeWhile (/= '(') . BLC.dropWhile (== '(') <$> normalizedDates
-      return $ (mkEpisode <$> zip items_720 dates) <> (mkEpisode <$> zip items_1080 dates)
+      return $ concat $ (transpose [mkEpisode <$> zip items_1080 dates, mkEpisode <$> zip items_720 dates])
 
 
     return $ Anime <$> showname
