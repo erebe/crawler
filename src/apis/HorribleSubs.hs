@@ -51,7 +51,7 @@ extractData :: UnixTime -> Text -> IO (Maybe Anime)
 extractData _ xmlStr = do
     let tags     = parseTagsOptions parseOptionsFast xmlStr
     let showname = extractTextFromTag "<h1 class='entry-title'>" tags
-    let thumb    = mappend (T.pack "https://horriblesubs.info") . fromAttrib (T.pack "src") <$> find (~== "<img class='img-responsive center-block'>") tags
+    let thumb    = (\url -> if (T.pack "https://") `T.isPrefixOf` url then url else (T.pack "https://horriblesubs.info" <> url)) . fromAttrib (T.pack "src") <$> find (~== "<img class='img-responsive center-block'>") tags
     let showId   = find (\tag -> maybe False (T.isPrefixOf (T.pack "var hs_showid")) (maybeTagText tag)) tags
     let showNumber = takeWhile isDigit . dropWhile (not .isDigit) . T.unpack . fromTagText $ fromMaybe (TagText (T.pack "")) showId
 
