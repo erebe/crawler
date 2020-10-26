@@ -1,5 +1,9 @@
 #!/bin/sh
 
+cd /data
+python3 -m http.server ${PORT:-8082} &
+cd -
+
 while true
 do
   awk '/###DATA###/{system("./crawler");next}1' index_template.html > index_full.html
