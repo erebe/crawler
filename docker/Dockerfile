@@ -9,7 +9,7 @@ RUN cd /home/crawler && \
     tar xzvf crawler.tar.gz && \
     rm crawler.tar.gz && \
     apk update && \
-    apk add ca-certificates && \
+    apk add python3 && \
     rm -rf /var/cache/apk/*
 
 USER crawler
@@ -17,6 +17,7 @@ WORKDIR /home/crawler
 
 VOLUME /data
 ENV SLEEP_TIME_SEC 1800
+ENV PORT 8082
 
 CMD ["./run.sh"]
 
