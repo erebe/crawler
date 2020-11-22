@@ -44,7 +44,7 @@ getChannelURL :: String -> String
 getChannelURL channelId = protocol <> url' <> generateSuffix [apiKey, channelId', part, order, limit]
   where
     -- Don't really care much if the api key is harcoded, feel free to stole it you bots
-    apiKey         = ("key"        , "AIzaSyB945eCbGUpH-78zpkXSZmbbI29ZiRX094")
+    apiKey         = ("key"        , "AIzaSyCOemBrZ1KSr6sXT9-xFs5wZf7byI4OyGo")
     protocol       = "https://"
     url'           = "www.googleapis.com/youtube/v3/search"
     channelId'     = ("channelId"  , channelId)

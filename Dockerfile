@@ -1,5 +1,4 @@
 FROM alpine:3.8 as builder
-MAINTAINER github@erebe.eu
 
 RUN apk --no-cache add ca-certificates git curl musl-dev gmp-dev zlib-dev pcre-dev ghc python
 RUN apk --no-cache add --repository http://dl-cdn.alpinelinux.org/alpine/edge/community upx
@@ -23,7 +22,6 @@ RUN upx --ultra-brute /root/.local/bin/crawler
 
 
 FROM alpine:latest as runner
-MAINTAINER github@erebe.eu
 
 WORKDIR /root
 COPY --from=builder /root/.local/bin/crawler .
